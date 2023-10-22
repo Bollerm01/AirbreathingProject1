@@ -24,6 +24,17 @@ import numpy as np
 class TFComputation:
 
     def __init__(self):
+        self.M = 0.85 # Mach number
+        self.h = 11e3 # Altitude, m
+        self.W_TO = 370000 # Max takeoff weight, lbf
+        self.W = 0.8*self.W_TO # Cruise weight, lbf
+        self.BPR = 10 # bypass ratio
+        self.y_c = 1.4 # Gamma cold section
+        self.y_h = 1.333 # Gamma hot section (post combustion)
+        self.Q = 43100 # Enthalpy of formation for fuel, kJ/kg
+        self.pi_f = 1.5 # Fan pressure ratio
+        self.pi_c = 36 # Compressor pressure ratio
+        
         
         return True
         
