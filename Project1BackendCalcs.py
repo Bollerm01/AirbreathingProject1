@@ -31,6 +31,7 @@ class TFComputation:
         self.BPR = 10 # bypass ratio
         self.y_c = 1.4 # Gamma cold section
         self.y_h = 1.333 # Gamma hot section (post combustion)
+        self.T0_4 = 1560 # Turbine inlet temperature, K
         self.Q = 43100 # Enthalpy of formation for fuel, kJ/kg
         self.pi_f = 1.5 # Fan pressure ratio
         self.pi_c = 36 # Compressor pressure ratio
@@ -43,6 +44,7 @@ class TFComputation:
         self.n_m = 0.99 # Mechanical efficiency
         self.n_j = 0.99 # Nozzle efficiency
         self.p0 = 0.227e5 # Ambient pressure - ISA table, Pa
+        self.T0 = 216.8 # Ambient temperature - ISA table, K
         self.S_W = 285 # Wing area, m**2
 
         # Lift and drag calculations
@@ -61,14 +63,30 @@ class TFComputation:
 
 
         return [(F/mdot), TSFC, f, thermoEff, propEff, overEff]
+    
+    def intakeCalc(self):
+        y = self.y_c
+        M = self.M
+        ni = self.n_i
+
+        self.T_02 = self.T0*(1+ (y-1)/2 * M**2)
+        self.P_02 = self.p0*(1 + ni*(y-1)/2*M**2)**(y/(y-1))
+        return True
      
-    def fanCalc(self):
+    def fanCalc(self,T_02,P_02):
+        y = self.y_c
+        nf = self.n_inf_f
 
-
+        self.T_02_5 = self.T_02*(self.pi_f)**((y-1)/(nf*y))
+        self.P_02_5 = self.P_02*self.pi_f
         return True
 
-    def compressCalc(self):
-        
+    def compressCalc(self,T_02_5,P_02_5):
+        nc = self.n_inf_c
+        y = self.y_c
+
+        self.T_03 = self.T_02_5*(self.pi_c)**((y-1)/(nc*y))
+        self.P_03 = self.P_02_5*self.pi_c        
         return True
     
     def combustorCalc(self):
@@ -76,6 +94,10 @@ class TFComputation:
         return True
     
     def turbCalc(self):
+        nm = self.n_m
+        y = self.y_h
+
+        
 
         return True
     
