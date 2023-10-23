@@ -43,8 +43,8 @@ class TFComputation:
         self.n_inf_t = 0.90 # Turbine polytropic efficiency
         self.n_m = 0.99 # Mechanical efficiency
         self.n_j = 0.99 # Nozzle efficiency
-        self.p0 = 0.227e5 # Ambient pressure - ISA table, Pa
-        self.T0 = 216.8 # Ambient temperature - ISA table, K
+        self.pa = 0.227e5 # Ambient pressure - ISA table, Pa
+        self.Ta = 216.8 # Ambient temperature - ISA table, K
         self.S_W = 285 # Wing area, m**2
         self.R = 287.1 # Ideal gas constant for air, J/kg*K
 
@@ -63,21 +63,44 @@ class TFComputation:
                 
         return True
         
-    def fullCycleCalc(self):
+    def fullCycleCalc(self,B,pi_f,pi_c):
+        self.BPR = B
+        self.pi_f = pi_f
+        self.pi_c = pi_c
 
+        self.intakeCalc()
+        self.fanCalc()
+        self.compressCalc()
+        self.combustorCalc()
+        self.turbCalc()
+        self.nozzleCalc()
+        self.mdotCalc()
+        self.diaCalc()
+        self.effCalc()
+        
+        F = self.T_r
+        mdot = self.mdot
+        dia = self.D
 
-        return [(F/mdot), TSFC, f, thermoEff, propEff, overEff]
+        f = self.f        
+        TSFC = self.mdot_f/F
+
+        thermoEff = self.n_e
+        propEff = self.n_p
+        overEff = self.n_o
+        
+        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff]
     
     def intakeCalc(self):
         y = self.y_c
         M = self.M
         ni = self.n_i
 
-        self.T_02 = self.T0*(1+ (y-1)/2 * M**2)
-        self.P_02 = self.p0*(1 + ni*(y-1)/2*M**2)**(y/(y-1))
+        self.T_02 = self.Ta*(1+ (y-1)/2 * M**2)
+        self.P_02 = self.pa*(1 + ni*(y-1)/2*M**2)**(y/(y-1))
         return True
      
-    def fanCalc(self,T_02,P_02):
+    def fanCalc(self):
         y = self.y_c
         nf = self.n_inf_f
 
@@ -85,7 +108,7 @@ class TFComputation:
         self.P_02_5 = self.P_02*self.pi_f
         return True
 
-    def compressCalc(self,T_02_5,P_02_5):
+    def compressCalc(self):
         nc = self.n_inf_c
         y = self.y_c
 
@@ -95,6 +118,8 @@ class TFComputation:
     
     def combustorCalc(self):
         self.P_04 = self.P_03*self.pi_b
+        self.f = (self.cpg*self.T_04 - self.cpa*self.T_03)/(self.n_b*(self.Q - self.cpg*self.T_04))
+
 
         return True
     
@@ -138,10 +163,34 @@ class TFComputation:
         return True
     
     def mdotCalc(self):
+        B = self.BPR
+        F = self.T_r
+
+        self.mdot = F/(B/(B+1)*self.C19 + 1/(B+1)*self.C9)
+        self.mdot_h = self.mdot/(B+1)
+        self.mdot_c = self.mdot*B/(B+1)
+        self.mdot_f = self.mdot_h*F
 
         return True
     
+    def diaCalc(self):
+        pa = self.pa
+        Ta = self.Ta
+
+        rho = pa/(self.R*Ta)
+        V = self.M*np.sqrt(self.y_c*self.R*Ta)
+
+        A = self.mdot/(V*rho)
+        self.D = 2*np.sqrt(A/np.pi)
+        return True
+    
     def effCalc(self):
+        V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
+        self.n_p = self.T_r*V/(0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
+
+        self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f*self.Q*1000)
+
+        self.n_o = self.n_e*self.n_p
 
         return True
 
