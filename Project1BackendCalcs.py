@@ -52,7 +52,7 @@ class TFComputation:
         self.cpg = 1.148 # Specific heat hot section, kJ/kg*K
 
         # Lift and drag calculations
-        L = self.W
+        L = self.W*4.44822162 # lbf to N
         q = self.y_c/2 * self.pa*self.M**2
         CL = L/(q*self.S_W)
 
@@ -188,7 +188,7 @@ class TFComputation:
         V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
         self.n_p = self.T_r*V/(0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
 
-        self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f*self.Q*1000)
+        self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
 
         self.n_o = self.n_e*self.n_p
 
