@@ -53,15 +53,14 @@ class TFComputation:
 
         # Lift and drag calculations
         L = self.W
-        q = self.y_c/2 * self.p0*self.M**2
+        q = self.y_c/2 * self.pa*self.M**2
         CL = L/(q*self.S_W)
 
         CD = 0.056*CL**2 - 0.004*CL + 0.014
         D = CD*q*self.S_W
 
-        self.T_r = D # Thrust required
-                
-        return True
+        self.T_r = D # Thrust required                
+        return
         
     def fullCycleCalc(self,B,pi_f,pi_c):
         self.BPR = B
@@ -147,16 +146,16 @@ class TFComputation:
         yc = self.y_c
         yh = self.y_h  
         nj = self.n_j 
-        pa = self.p0
-        R = self.R   
+        pa = self.pa
+        R = self.R
 
         # Fan nozzle - perfectly expanded assumption
-        M19 = np.sqrt((1/(1-nj*((pa/self.P_02_5)**((yc-1)/yc) - 1))-1)*2/(yc-1))
+        M19 = np.sqrt((1/(1-nj*(-(pa/self.P_02_5)**((yc-1)/yc)+1))-1)*2/(yc-1))
         T19 = self.T_02_5/(1 + (yc-1)/2 * M19**2)
         self.C19 = M19*np.sqrt(yc*R*T19)
 
         # Core nozzle - perfectly expanded assumption
-        M9 = np.sqrt((1/(1-nj*((pa/self.P_05)**((yh-1)/yh) - 1))-1)*2/(yh-1))
+        M9 = np.sqrt((1/(1-nj*(-(pa/self.P_05)**((yh-1)/yh) + 1))-1)*2/(yh-1))
         T9 = self.T_05/(1 + (yh-1)/2 * M9**2)
         self.C9 = M9*np.sqrt(yh*R*T9)
 
@@ -165,11 +164,12 @@ class TFComputation:
     def mdotCalc(self):
         B = self.BPR
         F = self.T_r
+        V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
 
-        self.mdot = F/(B/(B+1)*self.C19 + 1/(B+1)*self.C9)
+        self.mdot = F/(B/(B+1)*self.C19 + 1/(B+1)*self.C9 - V)
         self.mdot_h = self.mdot/(B+1)
         self.mdot_c = self.mdot*B/(B+1)
-        self.mdot_f = self.mdot_h*F
+        self.mdot_f = self.mdot_h*self.f*3600
 
         return True
     
@@ -193,9 +193,6 @@ class TFComputation:
         self.n_o = self.n_e*self.n_p
 
         return True
-
-    
-
 
         
 
