@@ -82,7 +82,8 @@ class TFComputation:
         dia = self.D
 
         f = self.f        
-        TSFC = self.mdot_f/F
+        TSFC = self.TSFC
+        #TSFC = self.f/(F/self.mdot)
 
         thermoEff = self.n_e
         propEff = self.n_p
@@ -191,6 +192,8 @@ class TFComputation:
         self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
 
         self.n_o = self.n_e*self.n_p
+
+        self.TSFC = V/(self.n_p*self.n_e*self.Q) # 
 
         return True
 
