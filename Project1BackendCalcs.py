@@ -34,7 +34,7 @@ class TFComputation:
         self.T_04 = 1560 # Turbine inlet temperature, K
         self.Q = 43100 # Enthalpy of formation for fuel, kJ/kg
         self.pi_f = 1.5 # Fan pressure ratio
-        self.pi_c = 36 # Compressor pressure ratio
+        self.pi_c = 36/self.pi_f # Compressor pressure ratio
         self.pi_b = 0.96 # Pressure loss across the combustor
         self.n_i = 0.98 # Inlet efficiency
         self.n_inf_f = 0.89 # Fan polytropic efficiency
@@ -59,10 +59,12 @@ class TFComputation:
         CD = 0.056*CL**2 - 0.004*CL + 0.014
         D = CD*q*self.S_W
 
-        self.T_r = D # Thrust required                
+        self.T_r = D # Thrust required
+        #self.T_r = 143
+                        
         return
         
-    def fullCycleCalc(self,B,pi_f,pi_c):
+    def fullCycleCalc(self,B=10,pi_f=1.5,pi_c=36/1.5):
         self.BPR = B
         self.pi_f = pi_f
         self.pi_c = pi_c
