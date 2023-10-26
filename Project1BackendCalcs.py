@@ -35,14 +35,14 @@ class TFComputation:
         self.Q = 43100 # Enthalpy of formation for fuel, kJ/kg
         self.pi_f = 1.5 # Fan pressure ratio
         self.pi_c = 36/self.pi_f # Compressor pressure ratio
-        self.pi_b = 0.96 # Pressure loss across the combustor
-        self.n_i = 0.98 # Inlet efficiency
-        self.n_inf_f = 0.89 # Fan polytropic efficiency
-        self.n_inf_c = 0.90 # Compressor polytropic efficiency
-        self.n_b = 0.99 # Combustor isentropic efficiency
-        self.n_inf_t = 0.90 # Turbine polytropic efficiency
-        self.n_m = 0.99 # Mechanical efficiency
-        self.n_j = 0.99 # Nozzle efficiency
+        self.pi_b = 1#0.96 # Pressure loss across the combustor
+        self.n_i = 1#0.98 # Inlet efficiency
+        self.n_inf_f = 1#0.89 # Fan polytropic efficiency
+        self.n_inf_c = 1#0.90 # Compressor polytropic efficiency
+        self.n_b = 1#0.99 # Combustor isentropic efficiency
+        self.n_inf_t = 1#0.90 # Turbine polytropic efficiency
+        self.n_m = 1#0.99 # Mechanical efficiency
+        self.n_j = 1#0.99 # Nozzle efficiency
         self.pa = 0.227e5 # Ambient pressure - ISA table, Pa
         self.Ta = 216.8 # Ambient temperature - ISA table, K
         self.S_W = 285 # Wing area, m**2
@@ -90,14 +90,20 @@ class TFComputation:
         thermoEff = self.n_e
         propEff = self.n_p
         overEff = self.n_o
+
+        self.tau_f = self.T_02_5/self.T_02
+        self.tau_cH = self.T_03/self.T_02_5
+        self.tau_tH = self.T_04_5/self.T_04
+        self.tau_tL = self.T_05/self.T_04_5
         
-        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff]
+        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03]
     
     def intakeCalc(self):
         y = self.y_c
         M = self.M
         ni = self.n_i
 
+        # Calculate temp and pressure after intake
         self.T_02 = self.Ta*(1+ (y-1)/2 * M**2)
         self.P_02 = self.pa*(1 + ni*(y-1)/2*M**2)**(y/(y-1))
         return True
@@ -106,6 +112,7 @@ class TFComputation:
         y = self.y_c
         nf = self.n_inf_f
 
+        # Calculate temp and pressure after fan
         self.T_02_5 = self.T_02*(self.pi_f)**((y-1)/(nf*y))
         self.P_02_5 = self.P_02*self.pi_f
         return True
@@ -114,15 +121,15 @@ class TFComputation:
         nc = self.n_inf_c
         y = self.y_c
 
+        # Calculate temp and pressure after compressor
         self.T_03 = self.T_02_5*(self.pi_c)**((y-1)/(nc*y))
         self.P_03 = self.P_02_5*self.pi_c        
         return True
     
     def combustorCalc(self):
+        # Calculate pressure after combustor and fuel flow
         self.P_04 = self.P_03*self.pi_b
         self.f = (self.cpg*self.T_04 - self.cpa*self.T_03)/(self.n_b*(self.Q - self.cpg*self.T_04))
-
-
         return True
     
     def turbCalc(self):
@@ -133,14 +140,18 @@ class TFComputation:
         cpg = self.cpg
         B = self.BPR
         
+        # Calculate temp after HPT
         delta_T_HPT = cpa/(nm*cpg) * (self.T_03 - self.T_02_5)
         self.T_04_5 = self.T_04 - delta_T_HPT
-
+        
+        # Calculate temp after LPT
         delta_T_LPT = (B+1)*cpa/(nm*cpg) * (self.T_02_5 - self.T_02)
         self.T_05 = self.T_04_5 - delta_T_LPT
 
+        # Pressure after HPT
         self.P_04_5 = self.P_04/(self.T_04/self.T_04_5)**(y/(nt*(y-1)))
         
+        # Pressure after LPT
         self.P_05 = self.P_04_5/(self.T_04_5/self.T_05)**(y/(nt*(y-1)))
 
         return True
