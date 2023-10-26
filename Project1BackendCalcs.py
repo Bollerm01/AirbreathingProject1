@@ -96,7 +96,7 @@ class TFComputation:
         self.tau_tH = self.T_04_5/self.T_04
         self.tau_tL = self.T_05/self.T_04_5
         
-        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03]
+        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03], [self.M9,self.M19]
     
     def intakeCalc(self):
         y = self.y_c
@@ -167,11 +167,13 @@ class TFComputation:
         M19 = np.sqrt((1/(1-nj*(-(pa/self.P_02_5)**((yc-1)/yc)+1))-1)*2/(yc-1))
         T19 = self.T_02_5/(1 + (yc-1)/2 * M19**2)
         self.C19 = M19*np.sqrt(yc*R*T19)
+        self.M19 = M19
 
         # Core nozzle - perfectly expanded assumption
         M9 = np.sqrt((1/(1-nj*(-(pa/self.P_05)**((yh-1)/yh) + 1))-1)*2/(yh-1))
         T9 = self.T_05/(1 + (yh-1)/2 * M9**2)
         self.C9 = M9*np.sqrt(yh*R*T9)
+        self.M9 = M9
 
         return True
     
