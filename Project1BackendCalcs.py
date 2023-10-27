@@ -72,6 +72,7 @@ class TFComputation:
             self.n_inf_t = 1 # Turbine polytropic efficiency
             self.n_m = 1 # Mechanical efficiency
             self.n_j = 1  # Nozzle efficiency
+            self.usefuel = 0
         elif isentropic == 'F':
             self.pi_b = 0.96 # Pressure loss across the combustor
             self.n_i = 0.98 # Inlet efficiency
@@ -81,6 +82,7 @@ class TFComputation:
             self.n_inf_t = 0.90 # Turbine polytropic efficiency
             self.n_m = 0.99 # Mechanical efficiency
             self.n_j = 0.99 # Nozzle efficiency
+            self.usefuel = 1
         else:
             print('Error')
                 
@@ -115,7 +117,7 @@ class TFComputation:
         self.tau_tH = self.T_04_5/self.T_04
         self.tau_tL = self.T_05/self.T_04_5
         
-        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03, self.T_04, self.T_04_5, self.T_05, self.P_05], [self.M9,self.M19]
+        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03, self.T_04, self.T_04_5, self.T_05, self.P_02, self.P_02_5, self.P_03, self.P_04,self.P_04_5,self.P_05], [self.M9,self.M19]
     
     def intakeCalc(self):
         y = self.y_c
@@ -142,7 +144,7 @@ class TFComputation:
 
         # Calculate temp and pressure after compressor
         self.T_03 = self.T_02_5*(self.pi_c)**((y-1)/(nc*y))
-        self.P_03 = self.P_02_5*self.pi_c        
+        self.P_03 = self.P_02_5*self.pi_c
         return True
     
     def combustorCalc(self):
@@ -160,11 +162,17 @@ class TFComputation:
         B = self.BPR
         
         # Calculate temp after HPT
-        delta_T_HPT = cpa/(nm*cpg) * (self.T_03 - self.T_02_5)
+        if self.usefuel == 0:
+            delta_T_HPT = cpa/(nm*cpg) * (self.T_03 - self.T_02_5)
+        else:
+            delta_T_HPT = cpa/((1+self.f)*nm*cpg) * (self.T_03 - self.T_02_5)
         self.T_04_5 = self.T_04 - delta_T_HPT
         
         # Calculate temp after LPT
-        delta_T_LPT = (B+1)*cpa/(nm*cpg) * (self.T_02_5 - self.T_02)
+        if self.usefuel == 0:
+            delta_T_LPT = (B+1)*cpa/(nm*cpg) * (self.T_02_5 - self.T_02)
+        else:
+            delta_T_LPT = (B+1)*cpa/((1+self.f)*nm*cpg) * (self.T_02_5 - self.T_02)
         self.T_05 = self.T_04_5 - delta_T_LPT
 
         # Pressure after HPT
@@ -201,7 +209,10 @@ class TFComputation:
         F = self.T_r
         V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
 
-        self.mdot = F/(B/(B+1)*self.C19 + 1/(B+1)*self.C9 - V)
+        if self.usefuel == 1:
+            self.mdot = F/(B/(B+1)*self.C19 + (1+self.f)/(B+1)*self.C9 - V)
+        else:
+            self.mdot = F/(B/(B+1)*self.C19 + (1)/(B+1)*self.C9 - V)
         self.mdot_h = self.mdot/(B+1)
         self.mdot_c = self.mdot*B/(B+1)
         self.mdot_f = self.mdot_h*self.f*3600
