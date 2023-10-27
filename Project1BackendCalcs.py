@@ -1,9 +1,5 @@
 
 
-
-
-
-
 '''
 AEEM4063 Project 1 Backend Calculations
 
@@ -33,7 +29,7 @@ class TFComputation:
         self.y_h = 1.333 # Gamma hot section (post combustion)
         self.T_04 = 1560 # Turbine inlet temperature, K
         self.Q = 43100 # Enthalpy of formation for fuel, kJ/kg
-        self.pi_f = 1.5 # Fan pressure ratio
+        '''self.pi_f = 1.5 # Fan pressure ratio
         self.pi_c = 36/self.pi_f # Compressor pressure ratio
         self.pi_b = 1#0.96 # Pressure loss across the combustor
         self.n_i = 1#0.98 # Inlet efficiency
@@ -42,13 +38,14 @@ class TFComputation:
         self.n_b = 1#0.99 # Combustor isentropic efficiency
         self.n_inf_t = 1#0.90 # Turbine polytropic efficiency
         self.n_m = 1#0.99 # Mechanical efficiency
-        self.n_j = 1#0.99 # Nozzle efficiency
+        self.n_j = 1#0.99 # Nozzle efficiency'''
         self.pa = 0.227e5 # Ambient pressure - ISA table, Pa
         self.Ta = 216.8 # Ambient temperature - ISA table, K
+        # self.Ta = 216.92
         self.S_W = 285 # Wing area, m**2
         self.R = 287.1 # Ideal gas constant for air, J/kg*K
-
         self.cpa = 1.005 # Specific heat cold section, kJ/kg*K
+        # self.cpa = 1.0048
         self.cpg = 1.148 # Specific heat hot section, kJ/kg*K
 
         # Lift and drag calculations
@@ -60,11 +57,33 @@ class TFComputation:
         D = CD*q*self.S_W
 
         self.T_r = D # Thrust required
-        #self.T_r = 143
+        # self.T_r = 150
                         
         return
         
-    def fullCycleCalc(self,B=10,pi_f=1.5,pi_c=36/1.5):
+    def fullCycleCalc(self,B=10,pi_f=1.5,pi_c=36,isentropic='T'):
+        
+        if isentropic == 'T':
+            self.pi_b = 1 # Pressure loss across the combustor
+            self.n_i = 1 # Inlet efficiency
+            self.n_inf_f = 1 # Fan polytropic efficiency
+            self.n_inf_c = 1 # Compressor polytropic efficiency
+            self.n_b = 1 # Combustor isentropic efficiency
+            self.n_inf_t = 1 # Turbine polytropic efficiency
+            self.n_m = 1 # Mechanical efficiency
+            self.n_j = 1  # Nozzle efficiency
+        elif isentropic == 'F':
+            self.pi_b = 0.96 # Pressure loss across the combustor
+            self.n_i = 0.98 # Inlet efficiency
+            self.n_inf_f = 0.89 # Fan polytropic efficiency
+            self.n_inf_c = 0.90 # Compressor polytropic efficiency
+            self.n_b = 0.99 # Combustor isentropic efficiency
+            self.n_inf_t = 0.90 # Turbine polytropic efficiency
+            self.n_m = 0.99 # Mechanical efficiency
+            self.n_j = 0.99 # Nozzle efficiency
+        else:
+            print('Error')
+                
         self.BPR = B
         self.pi_f = pi_f
         self.pi_c = pi_c
@@ -96,7 +115,7 @@ class TFComputation:
         self.tau_tH = self.T_04_5/self.T_04
         self.tau_tL = self.T_05/self.T_04_5
         
-        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03], [self.M9,self.M19]
+        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03, self.T_04, self.T_04_5, self.T_05, self.P_05], [self.M9,self.M19]
     
     def intakeCalc(self):
         y = self.y_c
@@ -205,7 +224,7 @@ class TFComputation:
         self.n_p = self.T_r*V/(0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
 
         self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
-
+        
         self.n_o = self.n_e*self.n_p
 
         self.TSFC = V/(self.n_p*self.n_e*self.Q)*1000 # g/(kN*s)
