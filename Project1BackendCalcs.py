@@ -216,6 +216,7 @@ class TFComputation:
         self.mdot_h = self.mdot/(B+1)
         self.mdot_c = self.mdot*B/(B+1)
         self.mdot_f = self.mdot_h*self.f*3600
+        self.mdot_g = self.mdot_h + self.mdot_f/3600
 
         return True
     
@@ -232,9 +233,9 @@ class TFComputation:
     
     def effCalc(self):
         V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
-        self.n_p = self.T_r*V/(0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
+        self.n_p = self.T_r*V/(0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
 
-        self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
+        self.n_e = 0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
         
         self.n_o = self.n_e*self.n_p
 
