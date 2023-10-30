@@ -39,9 +39,9 @@ class TFComputation:
         self.n_inf_t = 1#0.90 # Turbine polytropic efficiency
         self.n_m = 1#0.99 # Mechanical efficiency
         self.n_j = 1#0.99 # Nozzle efficiency'''
-        self.pa = 0.227e5 # Ambient pressure - ISA table, Pa
-        self.Ta = 216.8 # Ambient temperature - ISA table, K
-        # self.Ta = 216.92
+        self.pa = 0.22701e5 # Ambient pressure - ISA table, Pa
+        # self.Ta = 216.8 # Ambient temperature - ISA table, K
+        self.Ta = 216.92
         self.S_W = 285 # Wing area, m**2
         self.R = 287.1 # Ideal gas constant for air, J/kg*K
         self.cpa = 1.005 # Specific heat cold section, kJ/kg*K
@@ -117,7 +117,7 @@ class TFComputation:
         self.tau_tH = self.T_04_5/self.T_04
         self.tau_tL = self.T_05/self.T_04_5
         
-        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03, self.T_04, self.T_04_5, self.T_05, self.P_02, self.P_02_5, self.P_03, self.P_04,self.P_04_5,self.P_05], [self.M9,self.M19]
+        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03, self.T_04, self.T_04_5, self.T_05, self.P_02, self.P_02_5, self.P_03, self.P_04,self.P_04_5,self.P_05], [self.M9,self.M19,self.C0,self.C9]
     
     def intakeCalc(self):
         y = self.y_c
@@ -234,13 +234,25 @@ class TFComputation:
     def effCalc(self):
         V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
 
+<<<<<<< HEAD
         if self.usefuel == 1:
             self.n_p = self.T_r*V/(0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
             self.n_e = 0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
         else:
             self.n_p = self.T_r*V/(0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
             self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
+=======
+        # Using Cup formula
+        self.C0 = self.M*((self.y_c*self.R*self.Ta)**0.5)
+        # self.n_p = (self.C0*(self.mdot_c*(self.C19-self.C0) + self.mdot_h*(self.C9 - self.C0)))/(0.5*(self.mdot_h*(self.C9**2) + self.mdot_c*(self.C19**2) - self.mdot*(self.C0**2)))
+
+        self.n_e = 0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
+>>>>>>> 09cbedc711319a1b4905783dbecba20b64dfd2d9
         
+        # Using Cup formula
+        # self.T_0a = self.Ta*(1 + ((self.y_c - 1)/2)*(self.M**2))
+        # self.n_e = 1 - (self.T_02*self.Ta)/(self.T_03*self.T_0a)
+
         self.n_o = self.n_e*self.n_p
 
         self.TSFC = V/(self.n_p*self.n_e*self.Q)*1000 # g/(kN*s)
