@@ -117,7 +117,7 @@ class TFComputation:
         self.tau_tH = self.T_04_5/self.T_04
         self.tau_tL = self.T_05/self.T_04_5
         
-        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03, self.T_04, self.T_04_5, self.T_05, self.P_02, self.P_02_5, self.P_03, self.P_04,self.P_04_5,self.P_05], [self.M9,self.M19,self.C0,self.C9]
+        return [mdot, dia, (F/mdot), TSFC, f, thermoEff, propEff, overEff], [self.tau_f,self.tau_cH,self.tau_tH,self.tau_tL], [self.T_02,self.T_02_5,self.T_03, self.T_04, self.T_04_5, self.T_05, self.P_02, self.P_02_5, self.P_03, self.P_04,self.P_04_5,self.P_05], [self.M9,self.M19,self.C0,self.C9,self.C19]
     
     def intakeCalc(self):
         y = self.y_c
