@@ -234,20 +234,17 @@ class TFComputation:
     def effCalc(self):
         V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
 
-<<<<<<< HEAD
         if self.usefuel == 1:
             self.n_p = self.T_r*V/(0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
             self.n_e = 0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
         else:
             self.n_p = self.T_r*V/(0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
             self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
-=======
         # Using Cup formula
         self.C0 = self.M*((self.y_c*self.R*self.Ta)**0.5)
         # self.n_p = (self.C0*(self.mdot_c*(self.C19-self.C0) + self.mdot_h*(self.C9 - self.C0)))/(0.5*(self.mdot_h*(self.C9**2) + self.mdot_c*(self.C19**2) - self.mdot*(self.C0**2)))
 
-        self.n_e = 0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
->>>>>>> 09cbedc711319a1b4905783dbecba20b64dfd2d9
+        # self.n_e = 0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
         
         # Using Cup formula
         # self.T_0a = self.Ta*(1 + ((self.y_c - 1)/2)*(self.M**2))
