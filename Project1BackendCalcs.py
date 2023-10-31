@@ -90,6 +90,7 @@ class TFComputation:
         self.pi_f = pi_f
         self.pi_c = pi_c
 
+        # Steps through each stage of the engine
         self.intakeCalc()
         self.fanCalc()
         self.compressCalc()
@@ -100,18 +101,21 @@ class TFComputation:
         self.diaCalc()
         self.effCalc()
         
+        # Propogates thrust, overall mdot, and fan diameter
         F = self.T_r
         mdot = self.mdot
         dia = self.D
 
+        # Propogates fuel-air ratio and TSFC 
         f = self.f        
-        TSFC = self.TSFC
-        # TSFC = self.mdot_f/F
+        TSFC = self.TSFC        
 
+        # Propogates efficiencies
         thermoEff = self.n_e
         propEff = self.n_p
         overEff = self.n_o
 
+        # Calculates temperature ratios
         self.tau_f = self.T_02_5/self.T_02
         self.tau_cH = self.T_03/self.T_02_5
         self.tau_tH = self.T_04_5/self.T_04
@@ -205,6 +209,7 @@ class TFComputation:
         return True
     
     def mdotCalc(self):
+        # Calculates required mdot, mdot_h, mdot_c, mdot_g, mdot_f for given flight conditions
         B = self.BPR
         F = self.T_r
         V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
@@ -232,6 +237,7 @@ class TFComputation:
         return True
     
     def effCalc(self):
+        # Calculate thermal, propulsive, and overall efficiencies
         V = self.M*np.sqrt(self.y_c*self.R*self.Ta)
 
         if self.usefuel == 1:
@@ -240,15 +246,8 @@ class TFComputation:
         else:
             self.n_p = self.T_r*V/(0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2))
             self.n_e = 0.5*(self.mdot_h*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
-        # Using Cup formula
+      
         self.C0 = self.M*((self.y_c*self.R*self.Ta)**0.5)
-        # self.n_p = (self.C0*(self.mdot_c*(self.C19-self.C0) + self.mdot_h*(self.C9 - self.C0)))/(0.5*(self.mdot_h*(self.C9**2) + self.mdot_c*(self.C19**2) - self.mdot*(self.C0**2)))
-
-        # self.n_e = 0.5*(self.mdot_g*self.C9**2+self.mdot_c*self.C19**2-self.mdot*V**2)/(self.mdot_f/3600*self.Q*1000)
-        
-        # Using Cup formula
-        # self.T_0a = self.Ta*(1 + ((self.y_c - 1)/2)*(self.M**2))
-        # self.n_e = 1 - (self.T_02*self.Ta)/(self.T_03*self.T_0a)
 
         self.n_o = self.n_e*self.n_p
 
