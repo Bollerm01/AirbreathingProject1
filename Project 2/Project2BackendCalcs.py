@@ -271,13 +271,28 @@ class TurboMachineryComputation:
     def fullturbine(self):
         # Sets the rotational speed and mean blade speed
         N = self.N
-        Um = 350 #assumed mean blade speed based on experience, m/s
+        Um = 340 #assumed mean blade speed based on experience, m/s
         
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
         
+        # Uses stage estimation based on constant drop (initial guess) over the stages
+        T0s_est = 180 #estimate based on book example, K
+        
+        # Calculates the temp drop coeff.
+        psi_turb = (2*self.cp_h*1e3*T0s_est)/(Um**2)
+        # iteration to find the stage drop below the loading coefficient
+        T0s_rev = T0s_est
+        if np.round(psi_turb, 2) > 3.3:
+            while np.round(psi_turb, 2) > 3.3:
+                T0s_rev -= 5
+                psi_turb = (2*self.cp_h*1e3*T0s_rev)/(Um**2)
+        
+        stage_est = np.ceil(dT0_turb/T0s_rev)
 
-        return dT0_turb
+        ################ Stage 1 ################
+        
+        return dT0_turb, T0s_rev
     
     def compressorstage(self, delta_T0, React, p01, T01):
         # Calculate relative blade angles by solving system of eqs
