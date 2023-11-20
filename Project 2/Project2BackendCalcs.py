@@ -113,7 +113,7 @@ class TurboMachineryComputation:
         
         ################ Stage 1 ################
         # First stage calculation
-        delta_T0 = 28 ## Desired temperature rise per stage for the first stage 
+        delta_T0 = 30 ## Desired temperature rise per stage for the first stage 
         delta_C_w = self.cp_c*1e3*delta_T0/(self.lam*self.U_m)
         # Whirl velocities
         C_w1 = self.C_a*np.tan(alpha1)
@@ -125,7 +125,7 @@ class TurboMachineryComputation:
         alpha2 = np.arctan(C_w2/self.C_a)
         diffusion = np.cos(beta1)/np.cos(beta2)          
         # Organizing data for tables
-        data = np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([diffusion])))
+        data = np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion,0.0])))
         # Outlet stagnation pressure calculation of the first stage
         p031 = self.P_02*(1 + (self.n_inf_c*delta_T0)/self.T_02)**(self.y_c/(self.y_c-1))
         # Inlet tip Mach number
@@ -139,11 +139,11 @@ class TurboMachineryComputation:
         # Approximate Degree of Reaction at the mean radius
         React = 1 - (C_w1+C_w2)/(2*self.U_m)
 
-        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','V2/V1','T02','P03/P02','P03','M1t','M2t','Reaction','Loading'])
+        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P02','P03','M1t','M2t','Reaction','Loading'])
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
-        delta_T0 = 28 ## Desired temperature rise for the second stage
+        delta_T0 = 29 ## Desired temperature rise for the second stage
         React = 0.7 ## Degree of reaction for the second stage
         self.lam -= 0.03 ## Update loading coefficient
         # Calculate relative blade angles by solving system of eqs
@@ -169,12 +169,12 @@ class TurboMachineryComputation:
         T22 = T022 - C22**2/(2*self.cp_c*1e3)
         M22t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T22)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([diffusion, T022, p032/p031, p032, M12t, M22t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, p032/p031, p032, M12t, M22t, React, self.lam]))),3)
         # Update table
         meantable.loc[len(meantable)] = data
 
         ################ Stage 3 ################
-        delta_T0 = 28 ## Desired temperature rise for the second stage
+        delta_T0 = 29 ## Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage
         self.lam -= 0.03 ## Update loading coefficient
         # Calculate relative blade angles by solving system of eqs
@@ -200,7 +200,7 @@ class TurboMachineryComputation:
         T23 = T023 - C23**2/(2*self.cp_c*1e3)
         M23t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T23)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([diffusion, T023, p033/p032, p033, M13t, M23t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, p033/p032, p033, M13t, M23t, React, self.lam]))),3)
         # Update table
         meantable.loc[len(meantable)] = data
 
@@ -254,9 +254,20 @@ class TurboMachineryComputation:
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
         M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([diffusion, T02, p03/p01, p03, M1t, M2t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t, React, self.lam]))),3)
         # Update table
         meantable.loc[len(meantable)] = data
+
+        # Iterate through table to organize stator outlet angles
+        for i in range(0,len(meantable)-1):
+            meantable['alpha3'][i] = meantable['alpha1'][i+1]
+
+        # Iterate through table to calculate de Haller values for the stators
+        for i in range(0,len(meantable)):
+            alpha2 = np.deg2rad(meantable['alpha2'][i])
+            alpha3 = np.deg2rad(meantable['alpha3'][i])
+            s_diffusion = np.cos(alpha2)/np.cos(alpha3)
+            meantable['C3/C2'][i] = np.round(s_diffusion,3)
 
         meantable.index = np.arange(1, len(meantable)+1)
         # meantable.index.name = 'Stage'
@@ -313,7 +324,7 @@ class TurboMachineryComputation:
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
         M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([diffusion, T02, p03/p01, p03, M1t, M2t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t, React, self.lam]))),3)
         
         return data, p03, T02, diffusion
     
