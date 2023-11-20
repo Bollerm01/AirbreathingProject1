@@ -410,12 +410,15 @@ class TurboMachineryComputation:
         rtRat2 = (rm + (h2/2))/(rm - (h2/2))
         rtRat3 = (rm + (h3/2))/(rm - (h3/2))
 
+        # Calculates the Yn (T02 = T04)
+        P_02 = P2 / ((T2/self.T_04)**(self.y_h/(self.y_h - 1))) 
+        Yn = (self.P_04 - P_02)/(P_02 - P2) 
         ################ Stage 2 ################
         # Assumptions for second stage 
         alpha1 = alpha3 # new alpha1 is the previous stage alpha3
         alpha3 = 0.0
 
-        return dT0_turb, T0s_rev, stage_est
+        return dT0_turb, T0s_rev, stage_est, Yn
     
     def compressorstage(self, delta_T0, React, p01, T01):
         # Calculate relative blade angles by solving system of eqs
@@ -445,6 +448,96 @@ class TurboMachineryComputation:
         
         return data, p03, T02, diffusion
     
+    def turbinestage(self, alpha1, alpha3, Um, T0s_rev, psi_turb):
+        '''
+            Inputs: alpha1 = stage inlet angle
+                    alpha3 = stage exit angle
+                    Um = mean blade speed
+                    T0s_rev = revised stage temp drop
+                    lamdaN = nozzle loss coefficient
+                    psi_turb = turbine temp drop coeff.
+            Outputs:
+                    
+        
+        
+        '''
+        lambdaN = 0.05 # nozzle loss coefficient based on initial guess
+        # Calculates the B3 and deg. of reaction
+        beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
+        Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2 
+        # iterates to find a suitable degree of reaction
+        if np.round(Lambda, 3) > 0.420:
+            while np.round(Lambda, 3) > 0.420:
+                alpha3 += np.deg2rad(5)
+                beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
+                Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2
+        
+        # Calculates B2 and a2
+        beta2 = np.arctan((1/(2*self.phi))*(psi_turb/2 - 2*Lambda))
+        alpha2 = np.arctan(np.tan(beta2) + (1/self.phi))
+
+        # Calculates Ca2 and C2
+        Ca2 = Um*self.phi
+        C2 = Ca2 / np.cos(alpha2)
+
+        # Calculates the isentropic T2', T2 and p2
+        T2 = self.T_04 - (C2**2/(2*self.cp_h*1e3))
+        T2prime = T2- lamdaN*(C2**2/(2*self.cp_h*1e3))
+        stagStaticRat = (self.T_04/T2prime)**(self.y_h/(self.y_h-1))
+        CritPrat = 1.853
+        if stagStaticRat > CritPrat:
+            print('ask the child if he or she is choking')
+
+        P2 = self.T_04/stagStaticRat
+
+        # Calculate the rho2 and A2
+        rho2 = (P2*100)/(0.287*T2)      
+        A2 = self.mdot/(rho2*Ca2)
+        
+        # Calculates the Ca1, using Ca2 = Ca3 and C1 = C3
+        Ca3 = Ca2
+        C3 = Ca3/np.cos(alpha3)
+        C1 = C3
+        Ca1 = C1 #since alpha1 = 0.0
+
+        # Calculates rho1 and A1
+        T1 = self.T_04 - (C1**2/(2*self.cp_h*1e3))
+        P1 = self.P_04*(T1/self.T_04)**(self.y_h/(self.y_h-1))
+        rho1 = (P1*100)/(0.287*T1)
+        A1 = self.mdot/(rho1*Ca1)
+
+        # Calculates the outlet (station 3) conditions
+        T_03 = self.T_04 - T0s_rev
+        T3 = T_03 - (C3**2)/(2*self.cp_h*1e3)
+
+        # Calculates the P03 from the isentropic eff. (using P04 = P01 and T04 = T01) and P3 from isentropic
+        P_03 = self.P_04*(1 - (T0s_rev/(self.n_inf_t)))**(self.y_h/(self.y_h-1))
+        P3 = P_03*(T3/T_03)**(self.y_h/(self.y_h-1))
+
+        # Calculates the rho3, A3
+        rho3 = (P3*100)/(0.287*T3)
+        A3 = self.mdot/(rho3*Ca3)
+
+        # Rework to put at beginning for sizing 
+        # Size at inlet and outlet of turbine 
+        # Calculate the mean radius, use for calcs to get Um
+        # Calculate rm
+        rm = Um/(2*np.pi*N)
+
+        # Calculates the h1-h3
+        h1 = (N/Um)*A1
+        h2 = (N/Um)*A2
+        h3 = (N/Um)*A3
+
+        # Calculates the rt/rr
+        rtRat1 = (rm + (h1/2))/(rm - (h1/2))
+        rtRat2 = (rm + (h2/2))/(rm - (h2/2))
+        rtRat3 = (rm + (h3/2))/(rm - (h3/2))
+
+        
+        
+        
+        return
     def velocitytriangle():
 
         return
