@@ -113,7 +113,7 @@ class TurboMachineryComputation:
         
         ################ Stage 1 ################
         # First stage calculation
-        delta_T0 = 25 ## Desired temperature rise per stage for the first stage 
+        delta_T0 = 28 ## Desired temperature rise per stage for the first stage 
         delta_C_w = self.cp_c*1e3*delta_T0/(self.lam*self.U_m)
         # Whirl velocities
         C_w1 = self.C_a*np.tan(alpha1)
@@ -143,7 +143,7 @@ class TurboMachineryComputation:
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
-        delta_T0 = 25 ## Desired temperature rise for the second stage
+        delta_T0 = 28 ## Desired temperature rise for the second stage
         React = 0.7 ## Degree of reaction for the second stage
         self.lam -= 0.03 ## Update loading coefficient
         # Calculate relative blade angles by solving system of eqs
@@ -174,7 +174,7 @@ class TurboMachineryComputation:
         meantable.loc[len(meantable)] = data
 
         ################ Stage 3 ################
-        delta_T0 = 25 ## Desired temperature rise for the second stage
+        delta_T0 = 28 ## Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage
         self.lam -= 0.03 ## Update loading coefficient
         # Calculate relative blade angles by solving system of eqs
@@ -212,7 +212,7 @@ class TurboMachineryComputation:
             if (self.lam-0.01) > 0.84:
                 self.lam -= 0.01
 
-            delta_T0 = 30.0
+            delta_T0 = 40.0
             React = 0.5
 
             data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
