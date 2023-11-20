@@ -136,7 +136,6 @@ class TurboMachineryComputation:
         React = 1 - (C_w1+C_w2)/(2*self.U_m)
 
         meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','V2/V1','T02','P03/P02','P03','M1t','M2t','Reaction','Loading'])
-        # meantable.loc[len(meantable)] = [2.0125,1.0,2.0,3.0,5.0]
         # meantable['C3/C2'][0] = 2.0
 
         # Stage 2
