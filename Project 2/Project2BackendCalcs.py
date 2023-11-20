@@ -321,10 +321,6 @@ class TurboMachineryComputation:
         
         return data, p03, T02, diffusion
     
-    def turbinestage():
-
-        return
-    
     def velocitytriangle():
 
         return
