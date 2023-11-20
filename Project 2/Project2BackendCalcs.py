@@ -42,7 +42,8 @@ class TurboMachineryComputation:
         self.y_h = 1.333 # Gamma in the hot section
         self.cp_h = 1.148 # Specific heat hot section, kJ/(kg*K)
         # Basic design parameters - constant tip radius assumption
-        self.U_t1 = 350 # Max Tip speed, m/s
+        self.U_t1 = 350 # Inlet Tip speed, m/s
+        
         self.C_a = 150 # Inlet axial velocity, m/s
 
         # Other parameters
@@ -272,12 +273,13 @@ class TurboMachineryComputation:
         # Sets the rotational speed and mean blade speed
         N = self.N
         Um = 340 #assumed mean blade speed based on experience, m/s
+        lamdaN = 0.05 # assumed standard value
         
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
         
         # Uses stage estimation based on constant drop (initial guess) over the stages
-        T0s_est = 180 #estimate based on book example, K
+        T0s_est = 1000 #estimate based on book example, K
         
         # Calculates the temp drop coeff.
         psi_turb = (2*self.cp_h*1e3*T0s_est)/(Um**2)
@@ -288,11 +290,91 @@ class TurboMachineryComputation:
                 T0s_rev -= 5
                 psi_turb = (2*self.cp_h*1e3*T0s_rev)/(Um**2)
         
-        stage_est = np.ceil(dT0_turb/T0s_rev)
+        stage_est = (dT0_turb/T0s_rev)
 
         ################ Stage 1 ################
+        # Assumptions for first stage 
+        alpha1 = 0.0
+        alpha3 = 0.0
+
+        # Calculates the B3 and deg. of reaction
+        beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
+        Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2 
+        # iterates to find a suitable degree of reaction
+        if np.round(Lambda, 3) > 0.420:
+            while np.round(Lambda, 3) > 0.420:
+                alpha3 += np.deg2rad(5)
+                beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
+                Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2
         
-        return dT0_turb, T0s_rev
+        # Calculates B2 and a2
+        beta2 = np.arctan((1/(2*self.phi))*(psi_turb/2 - 2*Lambda))
+        alpha2 = np.arctan(np.tan(beta2) + (1/self.phi))
+
+        # Calculates Ca2 and C2
+        Ca2 = Um*self.phi
+        C2 = Ca2 / np.cos(alpha2)
+
+        # Calculates the isentropic T2', T2 and p2
+        T2 = self.T_04 - (C2**2/(2*self.cp_h*1e3))
+        T2prime = T2- lamdaN*(C2**2/(2*self.cp_h*1e3))
+        stagStaticRat = (self.T_04/T2prime)**(self.y_h/(self.y_h-1))
+        CritPrat = 1.853
+        if stagStaticRat > CritPrat:
+            print('ask the child if he or she is choking')
+
+        P2 = self.T_04/stagStaticRat
+
+        # Calculate the rho2 and A2
+        rho2 = (P2*100)/(0.287*T2)      
+        A2 = self.mdot/(rho2*Ca2)
+        
+        # Calculates the Ca1, using Ca2 = Ca3 and C1 = C3
+        Ca3 = Ca2
+        C3 = Ca3/np.cos(alpha3)
+        C1 = C3
+        Ca1 = C1 #since alpha1 = 0.0
+
+        # Calculates rho1 and A1
+        T1 = self.T_04 - (C1**2/(2*self.cp_h*1e3))
+        P1 = self.P_04*(T1/self.T_04)**(self.y_h/(self.y_h-1))
+        rho1 = (P1*100)/(0.287*T1)
+        A1 = self.mdot/(rho1*Ca1)
+
+        # Calculates the outlet (station 3) conditions
+        T_03 = self.T_04 - T0s_rev
+        T3 = T_03 - (C3**2)/(2*self.cp_h*1e3)
+
+        # Calculates the P03 from the isentropic eff. (using P04 = P01 and T04 = T01) and P3 from isentropic
+        P_03 = self.P_04*(1 - (T0s_rev/(self.n_inf_t)))**(self.y_h/(self.y_h-1))
+        P3 = P_03*(T3/T_03)**(self.y_h/(self.y_h-1))
+
+        # Calculates the rho3, A3
+        rho3 = (P3*100)/(0.287*T3)
+        A3 = self.mdot/(rho3*Ca3)
+
+        # Rework to put at beginning for sizing 
+        # Size at inlet and outlet of turbine 
+        # Calculate the mean radius, use for calcs to get Um
+        # Calculate rm
+        rm = Um/(2*np.pi*N)
+
+        # Calculates the h1-h3
+        h1 = (N/Um)*A1
+        h2 = (N/Um)*A2
+        h3 = (N/Um)*A3
+
+        # Calculates the rt/rr
+        rtRat1 = (rm + (h1/2))/(rm - (h1/2))
+        rtRat2 = (rm + (h2/2))/(rm - (h2/2))
+        rtRat3 = (rm + (h3/2))/(rm - (h3/2))
+
+        ################ Stage 2 ################
+        # Assumptions for second stage 
+        alpha1 = alpha3 # new alpha1 is the previous stage alpha3
+        alpha3 = 0.0
+
+        return dT0_turb, T0s_rev, stage_est
     
     def compressorstage(self, delta_T0, React, p01, T01):
         # Calculate relative blade angles by solving system of eqs
