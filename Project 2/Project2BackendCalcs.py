@@ -345,7 +345,11 @@ class TurboMachineryComputation:
         # meantable.reset_index().to_string(index=False)
         return meantable
        
+
+
+
     def fullturbine(self):
+        ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
         N = self.N
         Um = 340 #assumed mean blade speed based on experience, m/s
@@ -355,7 +359,7 @@ class TurboMachineryComputation:
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
         
         # Uses stage estimation based on constant drop (initial guess) over the stages
-        T0s_est = 1000 #estimate based on book example, K
+        T0s_est = 1000 # K
         
         # Calculates the temp drop coeff.
         psi_turb = (2*self.cp_h*1e3*T0s_est)/(Um**2)
@@ -373,7 +377,9 @@ class TurboMachineryComputation:
         alpha1 = 0.0
         alpha3 = 0.0
 
-        # Calculates the B3 and deg. of reaction
+        stg1Angles, stg1meanLambda, stg1meanV, stg1Areas, stg1RTrat, stg1Heights = self.turbinestage(self, alpha1, alpha3, Um, T0s_rev, psi_turb)
+
+        '''# Calculates the B3 and deg. of reaction
         beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
         Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2 
         # iterates to find a suitable degree of reaction
@@ -450,14 +456,33 @@ class TurboMachineryComputation:
         # print(self.P_04)
         # print(P_02)
         # print(P2)
-        # Yn = (self.P_04 - P_02)/(P_02 - P2) 
+        # Yn = (self.P_04 - P_02)/(P_02 - P2) '''
+        
+        # Uses stage estimation based on constant drop (initial guess) over the stages
+        T0_remaining = dT0_turb - T0s_rev # K
+        T0s_est = T0_remaining
+
+        # Calculates the temp drop coeff.
+        psi_turb = (2*self.cp_h*1e3*T0s_est)/(Um**2)
+        # iteration to find the stage drop below the loading coefficient
+        T0s_rev = T0s_est
+        if np.round(psi_turb, 2) > 3.3:
+            while np.round(psi_turb, 2) > 3.3:
+                T0s_rev -= 5
+                psi_turb = (2*self.cp_h*1e3*T0s_rev)/(Um**2)
+        
         ################ Stage 2 ################
         # Assumptions for second stage 
         alpha1 = alpha3 # new alpha1 is the previous stage alpha3
         alpha3 = 0.0
 
+        stg2Angles, stg2meanLambda, stg2meanV, stg2Areas, stg2RTrat, stg2Heights = self.turbinestage(self, alpha1, alpha3, Um, T0s_rev, psi_turb)
+
+        ## START HERE WITH CHECKING VALUES AFTER
         return dT0_turb, T0s_rev, stage_est
     
+
+
     def compressorstage(self, delta_T0, React, p01, T01):
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
@@ -507,9 +532,13 @@ class TurboMachineryComputation:
                     T0s_rev = revised stage temp drop
                     psi_turb = turbine temp drop coeff.
             Outputs:
-                    
-        
-        
+                    Mean Angles = [alpha1, alpha2, alpha3, B2, B3]
+                    Mean Deg. of React. = lambda
+                    Mean Velocities = [C1, Ca1, C2, Ca2, V2, C3, Ca3, V3]
+                    Pressure Ratio = P_02/P_01
+                    Areas = [A1, A2, A3]
+                    Root/Tip = [rt1, rt2, rt3]
+                    h = [h1, h2, h3]                
         '''
         N = 340 #m/s, based on stress experience
         lambdaN = 0.05 # nozzle loss coefficient based on experience
@@ -570,10 +599,7 @@ class TurboMachineryComputation:
         rho3 = (P3*100)/(0.287*T3)
         A3 = self.mdot/(rho3*Ca3)
 
-        # Rework to put at beginning for sizing 
-        # Size at inlet and outlet of turbine 
-        # Calculate the mean radius, use for calcs to get Um
-        # Calculate rm
+        # Mean radius calculation
         rm = Um/(2*np.pi*N)
 
         # Calculates the h1-h3
@@ -586,10 +612,20 @@ class TurboMachineryComputation:
         rtRat2 = (rm + (h2/2))/(rm - (h2/2))
         rtRat3 = (rm + (h3/2))/(rm - (h3/2))
 
+        # Calculates the V2 and V3
+        V2 = Ca2/np.cos(beta2)
+        V3 = ((Um+(C3*np.cos(alpha3)))**2 + Ca3**2)**0.5
         
+        # Organizes return statements
+        Angles = np.array([alpha1, alpha2, alpha3, beta2, beta3])
+        meanLambda = Lambda
+        meanV = np.array([C1, Ca1, C2, Ca2, V2, C3, Ca3, V3])
+        Areas = np.array([A1, A2, A3])
+        RTrat = np.array([rtRat1, rtRat2, rtRat3])
+        Heights = np.array([h1, h2, h3])
         
-        
-        return
+        return Angles, meanLambda, meanV, Areas, RTrat, Heights
+    
     def velocitytriangle():
 
         return
