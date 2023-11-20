@@ -364,7 +364,7 @@ class TurboMachineryComputation:
         if stagStaticRat > CritPrat:
             print('ask the child if he or she is choking')
 
-        P2 = self.T_04/stagStaticRat
+        P2 = self.P_04/stagStaticRat
 
         # Calculate the rho2 and A2
         rho2 = (P2*100)/(0.287*T2)      
@@ -410,15 +410,18 @@ class TurboMachineryComputation:
         rtRat2 = (rm + (h2/2))/(rm - (h2/2))
         rtRat3 = (rm + (h3/2))/(rm - (h3/2))
 
-        # Calculates the Yn (T02 = T04)
-        P_02 = P2 / ((T2/self.T_04)**(self.y_h/(self.y_h - 1))) 
-        Yn = (self.P_04 - P_02)/(P_02 - P2) 
+        # # Calculates the Yn (T02 = T04)
+        # P_02 = P2 / ((T2/self.T_04)**(self.y_h/(self.y_h - 1))) 
+        # print(self.P_04)
+        # print(P_02)
+        # print(P2)
+        # Yn = (self.P_04 - P_02)/(P_02 - P2) 
         ################ Stage 2 ################
         # Assumptions for second stage 
         alpha1 = alpha3 # new alpha1 is the previous stage alpha3
         alpha3 = 0.0
 
-        return dT0_turb, T0s_rev, stage_est, Yn
+        return dT0_turb, T0s_rev, stage_est
     
     def compressorstage(self, delta_T0, React, p01, T01):
         # Calculate relative blade angles by solving system of eqs
@@ -454,14 +457,14 @@ class TurboMachineryComputation:
                     alpha3 = stage exit angle
                     Um = mean blade speed
                     T0s_rev = revised stage temp drop
-                    lamdaN = nozzle loss coefficient
                     psi_turb = turbine temp drop coeff.
             Outputs:
                     
         
         
         '''
-        lambdaN = 0.05 # nozzle loss coefficient based on initial guess
+        lambdaN = 0.05 # nozzle loss coefficient based on experience
+
         # Calculates the B3 and deg. of reaction
         beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
         Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2 
