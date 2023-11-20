@@ -40,10 +40,14 @@ class TurboMachineryComputation:
         self.phi = 0.78 # Lower bound on flow coefficient
         self.psi = 3.3 # Upper bound on loading coefficient
         self.y_h = 1.333 # Gamma in the hot section
-        self.cp_c = 1.148 # Specific heat hot section, kJ/(kg*K)
+        self.cp_h = 1.148 # Specific heat hot section, kJ/(kg*K)
         # Basic design parameters - constant tip radius assumption
         self.U_t1 = 350 # Max Tip speed, m/s
         self.C_a = 150 # Inlet axial velocity, m/s
+
+        # Other parameters
+        self.n_m = 0.99 # assumed mechanical efficiency of 99%
+        self.delP_b = 0.06 # assumed burner pressure loss of 6%
 
         # Calcs for inlet conditions to the compressor
         # First, calculate fan outlet (assume intake has no loss)
@@ -75,6 +79,9 @@ class TurboMachineryComputation:
         self.p3 = self.P_03*(T3/self.T_03)**(self.y_c/(self.y_c-1))
         self.rho3 = self.p3*1e5/(self.R*T3)
 
+        # Calculates inlet pressure to the turbine using burner efficiency
+        self.P_04 = self.P_03*self.delP_b
+
         A3 = self.mdot/(self.BPR+1)/(self.rho3*self.C_a)
         h3 = A3/(2*np.pi*self.rm)
         self.rt_3 = self.rm + (h3/2)
@@ -83,7 +90,7 @@ class TurboMachineryComputation:
         return 
     
     def update(self):
-        return self.N, self.rt, self.rm, self.rr, self.M1_t, self.rt_3, self.rr_3
+        return self.N, self.rt, self.rm, self.rr, self.M1_t, self.rt_3, self.rr_3, self.P_02, self.T_02, self.P_03, self.T_03
     
     def fullturbo():
 
@@ -107,7 +114,8 @@ class TurboMachineryComputation:
         stage_est = np.ceil(self.delt_Ts/T0s_est)
 
         alpha1 = 0.0 # radians, inlet blade angle
-
+        
+        ################ Stage 1 ################
         # First stage calculation
         delta_T0 = 25 ## Desired temperature rise per stage for the first stage 
         delta_C_w = self.cp_c*1e3*delta_T0/(self.lam*self.U_m)
@@ -138,7 +146,7 @@ class TurboMachineryComputation:
         meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','V2/V1','T02','P03/P02','P03','M1t','M2t','Reaction','Loading'])
         # meantable['C3/C2'][0] = 2.0
 
-        # Stage 2
+        ################ Stage 2 ################
         delta_T0 = 25 ## Desired temperature rise for the second stage
         React = 0.7 ## Degree of reaction for the second stage
         self.lam -= 0.03 ## Update loading coefficient
@@ -169,7 +177,7 @@ class TurboMachineryComputation:
         # Update table
         meantable.loc[len(meantable)] = data
 
-        # Stage 3
+        ################ Stage 3 ################
         delta_T0 = 25 ## Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage
         self.lam -= 0.03 ## Update loading coefficient
@@ -203,6 +211,7 @@ class TurboMachineryComputation:
         test_p03 = p033
         test_T02 = T023
 
+        ################ Stages 4-16 ################
         for i in range(3, int(stage_est)+1):
             if (self.lam-0.01) > 0.84:
                 self.lam -= 0.01
@@ -223,7 +232,7 @@ class TurboMachineryComputation:
         p01 = test_p03
         T01 = test_T02
 
-        # Stage 17
+        ################ Stage 17 ################
         delta_T0 = ((15.0*self.P_02/p01)**((self.y_c-1)/self.y_c)-1)*T01/self.n_inf_c # Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage        
         # Calculate relative blade angles by solving system of eqs
@@ -257,10 +266,32 @@ class TurboMachineryComputation:
         # meantable.index.name = 'Stage'
         # meantable.reset_index().to_string(index=False)
         return meantable
-    
-    def fullturbine():
+       
+    def fullturbine(self):
+        # Sets the rotational speed and mean blade speed
+        N = self.N
+        Um = 340 #assumed mean blade speed based on experience, m/s
+        
+        # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
+        dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
+        
+        # Uses stage estimation based on constant drop (initial guess) over the stages
+        T0s_est = 180 #estimate based on book example, K
+        
+        # Calculates the temp drop coeff.
+        psi_turb = (2*self.cp_h*1e3*T0s_est)/(Um**2)
+        # iteration to find the stage drop below the loading coefficient
+        T0s_rev = T0s_est
+        if np.round(psi_turb, 2) > 3.3:
+            while np.round(psi_turb, 2) > 3.3:
+                T0s_rev -= 5
+                psi_turb = (2*self.cp_h*1e3*T0s_rev)/(Um**2)
+        
+        stage_est = np.ceil(dT0_turb/T0s_rev)
 
-        return
+        ################ Stage 1 ################
+        
+        return dT0_turb, T0s_rev
     
     def compressorstage(self, delta_T0, React, p01, T01):
         # Calculate relative blade angles by solving system of eqs
