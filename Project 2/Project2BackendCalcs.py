@@ -336,5 +336,6 @@ class TurboMachineryComputation:
         return
     
     def loadingfactor(self,stage):
+        # Loading factor calculation curve fit
         a = 0.1675; b = -0.2637; c = 0.8515; d = -0.0001238
         return a*np.exp(b*stage) + c*np.exp(d*stage)
