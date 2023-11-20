@@ -140,6 +140,15 @@ class TurboMachineryComputation:
         M21t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T21)
         # Approximate Degree of Reaction at the mean radius
         React = 1 - (C_w1+C_w2)/(2*self.U_m)
+        # Radius at the inlet to the rotor
+        T11 = self.T_02 - self.C_a**2/(2*self.cp_c*1e3)
+        p11 = self.P_02*(T11/self.T_02)**(self.y_c/(self.y_c-1))
+        rho11 = p11*1e5/(T11*self.R)
+        A11 = self.mdot/(self.BPR+1)/(rho11*self.C_a)
+        h11 = A11/(2*np.pi*self.rm)
+        rt11 = self.rm + (h11/2)
+        rr11 = self.rm - (h11/2)
+        rr_rt1 = rr11/rt11
         # Radius in between rotor and stator
         p21 = p031*(T21/T021)**(self.y_c/(self.y_c-1))
         rho21 = p21*1e5/(T21*self.R)
@@ -149,7 +158,7 @@ class TurboMachineryComputation:
         rr21 = self.rm - (h21/2)
         rr_rt = rr21/rt21
 
-        sizingtable = pd.DataFrame(np.round([np.array([0.0,rr_rt,0.0])],3),columns=['r_t 1','r_t 2','r_t 3'])
+        sizingtable = pd.DataFrame(np.round([np.array([rr_rt1,rr_rt,0.0])],3),columns=['r_t 1','r_t 2','r_t 3'])
 
         meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Loading'])
         # meantable['C3/C2'][0] = 2.0
@@ -185,6 +194,15 @@ class TurboMachineryComputation:
         M22t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T22)
         # Data organization
         data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, p032/p031, p032, M12t, M22t,C_w1,C_w2, React, self.lam]))),3)
+        # Radius at the inlet to the rotor
+        T12 = T021 - C21**2/(2*self.cp_c*1e3)
+        p12 = p031*(T12/T021)**(self.y_c/(self.y_c-1))
+        rho12 = p12*1e5/(T12*self.R)
+        A12 = self.mdot/(self.BPR+1)/(rho12*self.C_a)
+        h12 = A12/(2*np.pi*self.rm)
+        rt12 = self.rm + (h12/2)
+        rr12 = self.rm - (h12/2)
+        rr_rt1 = rr12/rt12
         # Radius in between rotor and stator
         p22 = p032*(T22/T022)**(self.y_c/(self.y_c-1))
         rho22 = p22*1e5/(T21*self.R)
@@ -194,7 +212,7 @@ class TurboMachineryComputation:
         rr22 = self.rm - (h22/2)
         rr_rt = rr22/rt22
 
-        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)
+        s_data = np.round(np.array([rr_rt1,rr_rt,0.0]),3)
 
         # Update table
         meantable.loc[len(meantable)] = data
@@ -231,6 +249,14 @@ class TurboMachineryComputation:
         M23t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T23)
         # Data organization
         data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, p033/p032, p033, M13t, M23t,C_w1,C_w2, React, self.lam]))),3)
+        # Radius at the inlet to the rotor
+        p13 = p032*(T22/T022)**(self.y_c/(self.y_c-1))
+        rho13 = p13*1e5/(T22*self.R)
+        A13 = self.mdot/(self.BPR+1)/(rho13*self.C_a)
+        h13 = A13/(2*np.pi*self.rm)
+        rt13 = self.rm + (h13/2)
+        rr13 = self.rm - (h13/2)
+        rr_rt1 = rr13/rt13
         # Radius in between rotor and stator
         p23 = p033*(T23/T023)**(self.y_c/(self.y_c-1))
         rho23 = p23*1e5/(T23*self.R)
@@ -240,7 +266,7 @@ class TurboMachineryComputation:
         rr23 = self.rm - (h23/2)
         rr_rt = rr23/rt23
 
-        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)
+        s_data = np.round(np.array([rr_rt1,rr_rt,0.0]),3)
 
         # Update table
         meantable.loc[len(meantable)] = data
@@ -321,7 +347,7 @@ class TurboMachineryComputation:
         rr2 = self.rm - (h2/2)
         rr_rt = rr2/rt2
 
-        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)
+        s_data = np.round(np.array([0.0,rr_rt,0.0]),3)
 
         # Update table
         meantable.loc[len(meantable)] = data
@@ -343,7 +369,7 @@ class TurboMachineryComputation:
         meantable.index = np.arange(1, len(meantable)+1)
         # meantable.index.name = 'Stage'
         # meantable.reset_index().to_string(index=False)
-        return meantable
+        return meantable, sizingtable
        
 
 
@@ -520,7 +546,7 @@ class TurboMachineryComputation:
         rr2 = self.rm - (h2/2)
         rr_rt = rr2/rt2
 
-        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)        
+        s_data = np.round(np.array([0.0,rr_rt,0.0]),3)        
         
         return data, s_data, p03, T02, diffusion
     
