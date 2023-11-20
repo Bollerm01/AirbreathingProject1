@@ -139,7 +139,7 @@ class TurboMachineryComputation:
         # Approximate Degree of Reaction at the mean radius
         React = 1 - (C_w1+C_w2)/(2*self.U_m)
 
-        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P02','P03','M1t','M2t','Reaction','Loading'])
+        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Reaction','Loading'])
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
@@ -268,6 +268,8 @@ class TurboMachineryComputation:
             alpha3 = np.deg2rad(meantable['alpha3'][i])
             s_diffusion = np.cos(alpha2)/np.cos(alpha3)
             meantable['C3/C2'][i] = np.round(s_diffusion,3)
+        
+
 
         meantable.index = np.arange(1, len(meantable)+1)
         # meantable.index.name = 'Stage'
