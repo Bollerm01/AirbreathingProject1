@@ -91,11 +91,7 @@ class TurboMachineryComputation:
     
     def update(self):
         return self.N, self.rt, self.rm, self.rr, self.M1_t, self.rt_3, self.rr_3, self.P_02, self.T_02, self.P_03, self.T_03
-    
-    def fullturbo():
-
-        return
-    
+        
     def fullcompressor(self):
         # Temperature rise through the compressor
         self.delt_Ts = self.T_03-self.T_02
