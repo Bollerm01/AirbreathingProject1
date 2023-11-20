@@ -115,6 +115,7 @@ class TurboMachineryComputation:
         # First stage calculation
         delta_T0 = 30 ## Desired temperature rise per stage for the first stage 
         delta_C_w = self.cp_c*1e3*delta_T0/(self.lam*self.U_m)
+        self.lam = self.loadingfactor(1)
         # Whirl velocities
         C_w1 = self.C_a*np.tan(alpha1)
         C_w2 = delta_C_w + C_w1
@@ -145,7 +146,7 @@ class TurboMachineryComputation:
         ################ Stage 2 ################
         delta_T0 = 29 ## Desired temperature rise for the second stage
         React = 0.7 ## Degree of reaction for the second stage
-        self.lam -= 0.03 ## Update loading coefficient
+        self.lam = self.loadingfactor(2) ## Update loading coefficient
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
         B2 = React*2*self.U_m/self.C_a
@@ -176,7 +177,7 @@ class TurboMachineryComputation:
         ################ Stage 3 ################
         delta_T0 = 29 ## Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage
-        self.lam -= 0.03 ## Update loading coefficient
+        self.lam = self.loadingfactor(3) ## Update loading coefficient
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
         B2 = React*2*self.U_m/self.C_a
@@ -207,10 +208,9 @@ class TurboMachineryComputation:
         test_p03 = p033
         test_T02 = T023
 
-        ################ Stages 4-16 ################
+        ################ Stages 4-14 ################
         for i in range(3, int(stage_est)+1):
-            if (self.lam-0.01) > 0.84:
-                self.lam -= 0.01
+            self.lam = self.loadingfactor(i+1)
 
             delta_T0 = 40.0
             React = 0.5
@@ -228,9 +228,10 @@ class TurboMachineryComputation:
         p01 = test_p03
         T01 = test_T02
 
-        ################ Stage 17 ################
+        ################ Stage 15 ################
         delta_T0 = ((15.0*self.P_02/p01)**((self.y_c-1)/self.y_c)-1)*T01/self.n_inf_c # Desired temperature rise for the second stage
-        React = 0.5 ## Degree of reaction for the second stage        
+        React = 0.5 ## Degree of reaction for the second stage   
+        self.lam = self.loadingfactor(15)     
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
         B2 = React*2*self.U_m/self.C_a
@@ -333,3 +334,7 @@ class TurboMachineryComputation:
     def velocitytriangle():
 
         return
+    
+    def loadingfactor(self,stage):
+        a = 0.1675; b = -0.2637; c = 0.8515; d = -0.0001238
+        return a*np.exp(b*stage) + c*np.exp(d*stage)
