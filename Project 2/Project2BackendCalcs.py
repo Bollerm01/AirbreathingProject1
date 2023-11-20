@@ -208,27 +208,59 @@ class TurboMachineryComputation:
         test_p03 = p033
         test_T02 = T023
 
-        ################ Stages 4-14 ################
-        for i in range(3, int(stage_est)+1):
-            self.lam = self.loadingfactor(i+1)
+        test3_p03 = test_p03
 
-            delta_T0 = 40.0
+        final_P03 = self.cpr*self.P_02
+        ns = 4
+
+        ################ Intermediate Stages ################
+        while test3_p03 < final_P03:
+            self.lam = self.loadingfactor(ns)
+            ns += 1
+
+            delta_T0 = 100.0
             React = 0.5
-
             data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
             while diffusion < self.haller+0.01:
                 delta_T0 -= 0.01
                 data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
-            
+
             test_p03 = test2_p03
             test_T02 = test2_T02
             # Update table
             meantable.loc[len(meantable)] = data
 
+            # Calculate next estimated max
+            delta_T0 = 100.0
+            data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            while diffusion < self.haller+0.01:
+                delta_T0 -= 0.01
+                data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            
+            test3_p03 = test2_p03
+
+        # for i in range(3, int(stage_est)+1):
+        #     self.lam = self.loadingfactor(i+1)
+
+        #     delta_T0 = 40.0
+        #     React = 0.5
+
+        #     data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+        #     while diffusion < self.haller+0.01:
+        #         delta_T0 -= 0.01
+        #         data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            
+            
+            
+        #     test_p03 = test2_p03
+        #     test_T02 = test2_T02
+        #     # Update table
+        #     meantable.loc[len(meantable)] = data        
+
         p01 = test_p03
         T01 = test_T02
 
-        ################ Stage 15 ################
+        ################ Last Stage ################
         delta_T0 = ((15.0*self.P_02/p01)**((self.y_c-1)/self.y_c)-1)*T01/self.n_inf_c # Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage   
         self.lam = self.loadingfactor(15)     
