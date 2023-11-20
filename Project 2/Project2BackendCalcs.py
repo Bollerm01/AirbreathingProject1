@@ -511,6 +511,7 @@ class TurboMachineryComputation:
         
         
         '''
+        N = 340 #m/s, based on stress experience
         lambdaN = 0.05 # nozzle loss coefficient based on experience
 
         # Calculates the B3 and deg. of reaction
@@ -533,7 +534,7 @@ class TurboMachineryComputation:
 
         # Calculates the isentropic T2', T2 and p2
         T2 = self.T_04 - (C2**2/(2*self.cp_h*1e3))
-        T2prime = T2- lamdaN*(C2**2/(2*self.cp_h*1e3))
+        T2prime = T2- lambdaN*(C2**2/(2*self.cp_h*1e3))
         stagStaticRat = (self.T_04/T2prime)**(self.y_h/(self.y_h-1))
         CritPrat = 1.853
         if stagStaticRat > CritPrat:
