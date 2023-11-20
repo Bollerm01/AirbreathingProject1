@@ -86,7 +86,7 @@ class TurboMachineryComputation:
         A3 = self.mdot/(self.BPR+1)/(self.rho3*self.C_a)
         h3 = A3/(2*np.pi*self.rm)
         self.rt_3 = self.rm + (h3/2)
-        self.rr_3 = self.rm - (h3/2)
+        self.rr_3 = self.rm - (h3/2)        
         
         return 
     
@@ -140,8 +140,18 @@ class TurboMachineryComputation:
         M21t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T21)
         # Approximate Degree of Reaction at the mean radius
         React = 1 - (C_w1+C_w2)/(2*self.U_m)
+        # Radius in between rotor and stator
+        p21 = p031*(T21/T021)**(self.y_c/(self.y_c-1))
+        rho21 = p21*1e5/(T21*self.R)
+        A21 = self.mdot/(self.BPR+1)/(rho21*self.C_a)
+        h21 = A21/(2*np.pi*self.rm)
+        rt21 = self.rm + (h21/2)
+        rr21 = self.rm - (h21/2)
+        rr_rt = rr21/rt21
 
-        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Reaction','Loading'])
+        sizingtable = pd.DataFrame(np.round([np.array([0.0,rr_rt,0.0])],3),columns=['r_t 1','r_t 2','r_t 3'])
+
+        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Loading'])
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
@@ -156,6 +166,9 @@ class TurboMachineryComputation:
         # Calculate absolute blade angles
         alpha1 = np.arctan(self.U_m/self.C_a - np.tan(beta1))
         alpha2 = np.arctan(self.U_m/self.C_a - np.tan(beta2))
+        # Calculate whirl velocities
+        C_w1 = self.C_a*np.tan(alpha1)
+        C_w2 = self.C_a*np.tan(alpha2)
         # Calculation diffusion for de Haller criteria
         diffusion = np.cos(beta1)/np.cos(beta2)
         # Calculate outlet pressure
@@ -171,9 +184,21 @@ class TurboMachineryComputation:
         T22 = T022 - C22**2/(2*self.cp_c*1e3)
         M22t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T22)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, p032/p031, p032, M12t, M22t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, p032/p031, p032, M12t, M22t,C_w1,C_w2, React, self.lam]))),3)
+        # Radius in between rotor and stator
+        p22 = p032*(T22/T022)**(self.y_c/(self.y_c-1))
+        rho22 = p22*1e5/(T21*self.R)
+        A22 = self.mdot/(self.BPR+1)/(rho22*self.C_a)
+        h22 = A22/(2*np.pi*self.rm)
+        rt22 = self.rm + (h22/2)
+        rr22 = self.rm - (h22/2)
+        rr_rt = rr22/rt22
+
+        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)
+
         # Update table
         meantable.loc[len(meantable)] = data
+        sizingtable.loc[len(sizingtable)] = s_data
 
         ################ Stage 3 ################
         delta_T0 = 29 ## Desired temperature rise for the second stage
@@ -187,6 +212,9 @@ class TurboMachineryComputation:
         # Calculate absolute blade angles
         alpha1 = np.arctan(self.U_m/self.C_a - np.tan(beta1))
         alpha2 = np.arctan(self.U_m/self.C_a - np.tan(beta2))
+        # Calculate whirl velocities
+        C_w1 = self.C_a*np.tan(alpha1)
+        C_w2 = self.C_a*np.tan(alpha2)
         # Calculation diffusion for de Haller criteria
         diffusion = np.cos(beta1)/np.cos(beta2)
         # Calculate outlet pressure
@@ -202,9 +230,21 @@ class TurboMachineryComputation:
         T23 = T023 - C23**2/(2*self.cp_c*1e3)
         M23t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T23)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, p033/p032, p033, M13t, M23t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, p033/p032, p033, M13t, M23t,C_w1,C_w2, React, self.lam]))),3)
+        # Radius in between rotor and stator
+        p23 = p033*(T23/T023)**(self.y_c/(self.y_c-1))
+        rho23 = p23*1e5/(T23*self.R)
+        A23 = self.mdot/(self.BPR+1)/(rho23*self.C_a)
+        h23 = A23/(2*np.pi*self.rm)
+        rt23 = self.rm + (h23/2)
+        rr23 = self.rm - (h23/2)
+        rr_rt = rr23/rt23
+
+        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)
+
         # Update table
         meantable.loc[len(meantable)] = data
+        sizingtable.loc[len(sizingtable)] = s_data
 
         test_p03 = p033
         test_T02 = T023
@@ -221,43 +261,26 @@ class TurboMachineryComputation:
 
             delta_T0 = 100.0
             React = 0.5
-            data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
             while diffusion < self.haller+0.01:
                 delta_T0 -= 0.01
-                data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+                data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
 
             test_p03 = test2_p03
             test_T02 = test2_T02
             # Update table
             meantable.loc[len(meantable)] = data
+            sizingtable.loc[len(sizingtable)] = s_data
 
             # Calculate next estimated max
             delta_T0 = 100.0
-            data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
             while diffusion < self.haller+0.01:
                 delta_T0 -= 0.01
-                data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+                data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
             
             test3_p03 = test2_p03
-
-        # for i in range(3, int(stage_est)+1):
-        #     self.lam = self.loadingfactor(i+1)
-
-        #     delta_T0 = 40.0
-        #     React = 0.5
-
-        #     data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
-        #     while diffusion < self.haller+0.01:
-        #         delta_T0 -= 0.01
-        #         data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
-            
-            
-            
-        #     test_p03 = test2_p03
-        #     test_T02 = test2_T02
-        #     # Update table
-        #     meantable.loc[len(meantable)] = data        
-
+        
         p01 = test_p03
         T01 = test_T02
 
@@ -288,9 +311,21 @@ class TurboMachineryComputation:
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
         M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t,C_w1,C_w2, React, self.lam]))),3)
+         # Radius in between rotor and stator
+        p2 = p03*(T2/T02)**(self.y_c/(self.y_c-1))
+        rho2 = p2*1e5/(T2*self.R)
+        A2 = self.mdot/(self.BPR+1)/(rho2*self.C_a)
+        h2 = A2/(2*np.pi*self.rm)
+        rt2 = self.rm + (h2/2)
+        rr2 = self.rm - (h2/2)
+        rr_rt = rr2/rt2
+
+        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)
+
         # Update table
         meantable.loc[len(meantable)] = data
+        sizingtable.loc[len(sizingtable)] = s_data
 
         # Iterate through table to organize stator outlet angles
         for i in range(0,len(meantable)-1):
@@ -426,6 +461,9 @@ class TurboMachineryComputation:
         # Calculate absolute blade angles
         alpha1 = np.arctan(self.U_m/self.C_a - np.tan(beta1))
         alpha2 = np.arctan(self.U_m/self.C_a - np.tan(beta2))
+        # Calculate whirl velocities
+        C_w1 = self.C_a*np.tan(alpha1)
+        C_w2 = self.C_a*np.tan(alpha2)
         # Calculation diffusion for de Haller criteria
         diffusion = np.cos(beta1)/np.cos(beta2)
         # Calculate outlet pressure
@@ -441,9 +479,19 @@ class TurboMachineryComputation:
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
         M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t,C_w1,C_w2, React, self.lam]))),3)
+        # Radius in between rotor and stator
+        p2 = p03*(T2/T02)**(self.y_c/(self.y_c-1))
+        rho2 = p2*1e5/(T2*self.R)
+        A2 = self.mdot/(self.BPR+1)/(rho2*self.C_a)
+        h2 = A2/(2*np.pi*self.rm)
+        rt2 = self.rm + (h2/2)
+        rr2 = self.rm - (h2/2)
+        rr_rt = rr2/rt2
+
+        s_data = np.round([np.array([0.0,rr_rt,0.0])],3)        
         
-        return data, p03, T02, diffusion
+        return data, s_data, p03, T02, diffusion
     
     def velocitytriangle():
 
