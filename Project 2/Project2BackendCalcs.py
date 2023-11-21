@@ -17,6 +17,8 @@ class TurboMachineryComputation:
     def __init__(self):
         self.BPR = 6.0 # Bypass ratio
         self.mdot = 280.0 # Total mass flow, kg/s
+        
+        
         # Sea level static conditions
         self.pa = 1.01325 # Ambient pressure, bar
         self.Ta = 288.15 # Ambient temperature, K
@@ -48,7 +50,8 @@ class TurboMachineryComputation:
 
         # Other parameters
         self.n_m = 0.99 # assumed mechanical efficiency of 99%
-        self.delP_b = 0.06 # assumed burner pressure loss of 6%
+        self.delP_b = 0.00 # assumed burner pressure loss of 0%
+        self.n_b = 1.0 # assumed burner eff. of 100%
 
         # Calcs for inlet conditions to the compressor
         # First, calculate fan outlet (assume intake has no loss)
@@ -80,6 +83,11 @@ class TurboMachineryComputation:
         self.p3 = self.P_03*(T3/self.T_03)**(self.y_c/(self.y_c-1))
         self.rho3 = self.p3*1e5/(self.R*T3)
 
+        # Calculates the fuel flow
+        FAR = (self.cp_h*(self.T_04) - self.cp_c*(self.T_03))/(43100 - self.cp_h*self.T_03)
+        m_fuel = FAR*self.mdoth
+        self.mdoth = (self.mdot / (self.BPR + 1)) + m_fuel # Hot Section Flow, kg/s
+        
         # Calculates inlet pressure to the turbine using burner efficiency
         self.P_04 = self.P_03*self.delP_b
 
@@ -599,7 +607,7 @@ class TurboMachineryComputation:
 
         # Calculate the rho2 and A2
         rho2 = (P2*100)/(0.287*T2)      
-        A2 = self.mdot/(rho2*Ca2)
+        A2 = self.mdoth/(rho2*Ca2)
         
         # Calculates the Ca1, using Ca2 = Ca3 and C1 = C3
         Ca3 = Ca2
@@ -611,7 +619,7 @@ class TurboMachineryComputation:
         T1 = self.T_04 - (C1**2/(2*self.cp_h*1e3))
         P1 = self.P_04*(T1/self.T_04)**(self.y_h/(self.y_h-1))
         rho1 = (P1*100)/(0.287*T1)
-        A1 = self.mdot/(rho1*Ca1)
+        A1 = self.mdoth/(rho1*Ca1)
 
         # Calculates the outlet (station 3) conditions
         T_03 = self.T_04 - T0s_rev
@@ -623,7 +631,7 @@ class TurboMachineryComputation:
 
         # Calculates the rho3, A3
         rho3 = (P3*100)/(0.287*T3)
-        A3 = self.mdot/(rho3*Ca3)
+        A3 = self.mdoth/(rho3*Ca3)
 
         # Mean radius calculation
         rm = Um/(2*np.pi*N)
