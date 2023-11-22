@@ -85,11 +85,11 @@ class TurboMachineryComputation:
 
         # Calculates the fuel flow
         FAR = (self.cp_h*(self.T_04) - self.cp_c*(self.T_03))/(43100 - self.cp_h*self.T_03)
-        m_fuel = FAR*self.mdoth
+        m_fuel = FAR*(self.mdot / (self.BPR + 1))
         self.mdoth = (self.mdot / (self.BPR + 1)) + m_fuel # Hot Section Flow, kg/s
         
         # Calculates inlet pressure to the turbine using burner efficiency
-        self.P_04 = self.P_03*self.delP_b
+        self.P_04 = self.P_03*self.n_b
 
         A3 = self.mdot/(self.BPR+1)/(self.rho3*self.C_a)
         h3 = A3/(2*np.pi*self.rm)
@@ -407,32 +407,36 @@ class TurboMachineryComputation:
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
         N = self.N
-        Um = 340 #assumed mean blade speed based on experience, m/s
+        Um = 375 #assumed mean blade speed based on experience, m/s
         lamdaN = 0.05 # assumed standard value
-        
+        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
+        phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
         
+        ################ Stage 1 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
         T0s_est = 1000 # K
         
-        # Calculates the temp drop coeff.
-        psi_turb = (2*self.cp_h*1e3*T0s_est)/(Um**2)
+        # Calculates the temp drop coeff. for the first stage
+        psi_turb1 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
         # iteration to find the stage drop below the loading coefficient
-        T0s_rev = T0s_est
-        if np.round(psi_turb, 2) > 3.3:
-            while np.round(psi_turb, 2) > 3.3:
-                T0s_rev -= 5
-                psi_turb = (2*self.cp_h*1e3*T0s_rev)/(Um**2)
+        T0s_rev1 = T0s_est
+        if np.round(psi_turb1, 2) > psi_max[0]:
+            while np.round(psi_turb1, 2) > psi_max[0]:
+                T0s_rev1 -= 5
+                psi_turb1 = (2*self.cp_h*1e3*T0s_rev1)/(Um**2)
         
-        stage_est = (dT0_turb/T0s_rev)
+        stage_est = (dT0_turb/T0s_rev1)
 
-        ################ Stage 1 ################
+        
         # Assumptions for first stage 
         alpha1 = 0.0
         alpha3 = 0.0
+        P_011 = self.P_04
+        T_011 = self.T_04
 
-        stg1Angles, stg1meanLambda, stg1meanV, stg1Areas, stg1RTrat, stg1Heights = self.turbinestage(self, alpha1, alpha3, Um, T0s_rev, psi_turb)
+        gasParamsStg1, measurementsStg1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_vals[0])
 
         '''# Calculates the B3 and deg. of reaction
         beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
@@ -513,28 +517,60 @@ class TurboMachineryComputation:
         # print(P2)
         # Yn = (self.P_04 - P_02)/(P_02 - P2) '''
         
+        ################ Stage 2 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
-        T0_remaining = dT0_turb - T0s_rev # K
+        T0_remaining = dT0_turb - T0s_rev1 # K
         T0s_est = T0_remaining
 
-        # Calculates the temp drop coeff.
-        psi_turb = (2*self.cp_h*1e3*T0s_est)/(Um**2)
+        # Calculates the temp drop coeff. for the first stage
+        psi_turb2 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
         # iteration to find the stage drop below the loading coefficient
-        T0s_rev = T0s_est
-        if np.round(psi_turb, 2) > 3.3:
-            while np.round(psi_turb, 2) > 3.3:
-                T0s_rev -= 5
-                psi_turb = (2*self.cp_h*1e3*T0s_rev)/(Um**2)
+        T0s_rev2 = T0s_est
+        if np.round(psi_turb2, 2) > psi_max[1]:
+            while np.round(psi_turb2, 2) > psi_max[1]:
+                T0s_rev2 -= 5
+                psi_turb2 = (2*self.cp_h*1e3*T0s_rev2)/(Um**2)
         
-        ################ Stage 2 ################
         # Assumptions for second stage 
-        alpha1 = alpha3 # new alpha1 is the previous stage alpha3
+        alpha1 = np.deg2rad(gasParamsStg1[2]) # new alpha1 is the previous stage alpha3
         alpha3 = 0.0
+        T_012 = self.T_04 - T0s_rev1
+        P_012 = self.P_04*gasParamsStg1[6] 
 
-        stg2Angles, stg2meanLambda, stg2meanV, stg2Areas, stg2RTrat, stg2Heights = self.turbinestage(self, alpha1, alpha3, Um, T0s_rev, psi_turb)
+        gasParamsStg2, measurementsStg2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0s_rev2, psi_turb2, phi_vals[1])
+
+        ################ Stage 3 ################
+        # Uses stage estimation based on constant drop (initial guess) over the stages
+        T0_remaining -= T0s_rev2 # K
+        T0s_est = T0_remaining
+
+        # Calculates the temp drop coeff. for the first stage
+        psi_turb3 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
+        # iteration to find the stage drop below the loading coefficient
+        T0s_rev3 = T0s_est
+        if np.round(psi_turb3, 2) > psi_max[2]:
+            while np.round(psi_turb3, 2) > psi_max[2]:
+                T0s_rev3 -= 5
+                psi_turb3 = (2*self.cp_h*1e3*T0s_rev3)/(Um**2)
+
+        # Assumptions for the third stage
+        alpha1 = np.deg2rad(gasParamsStg2[2])
+        alpha3 = 0.0
+        T_013 = self.T_04 - T0s_rev1 - T0s_rev2
+        P_013 = self.P_04*gasParamsStg1[6]*gasParamsStg2[6] 
+
+
+        gasParamsStg3, measurementsStg3 = self.turbinestage(alpha1, alpha3, Um, T_013, P_013, T0s_rev3, psi_turb3, phi_vals[2])
+        
+        # Adds the data to Pandas DFs 
+        gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2,gasParamsStg3]),3)
+        measurementsData = np.round(np.array([measurementsStg1,measurementsStg2,measurementsStg3]),3)
+        
+        gasParamDF = pd.DataFrame(gasParamData, index=[1,2,3], columns=['α1','α2','α3','β2','β3','ΔT0s','P02/P01','Cw3','M3t','Φ','ψ','Λ'])
+        measurementsDF = pd.DataFrame(measurementsData, index=[1,2,3], columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3'])
 
         ## START HERE WITH CHECKING VALUES AFTER
-        return dT0_turb, T0s_rev, stage_est
+        return gasParamDF, measurementsDF, stage_est, Um
     
 
 
@@ -589,52 +625,50 @@ class TurboMachineryComputation:
         
         return data, s_data, p03, T02, diffusion
     
-    def turbinestage(self, alpha1, alpha3, Um, T0s_rev, psi_turb):
+    def turbinestage(self, alpha1, alpha3, Um, T_01, P_01, T0s_rev, psi_turb, phi):
         '''
             Inputs: alpha1 = stage inlet angle
                     alpha3 = stage exit angle
                     Um = mean blade speed
+                    T01 = Inlet stag. temp
+                    P01 = Inlet stag. pressure
                     T0s_rev = revised stage temp drop
                     psi_turb = turbine temp drop coeff.
+                    phi = flow coefficient (>=0.78)
             Outputs:
-                    Mean Angles = [alpha1, alpha2, alpha3, B2, B3]
-                    Mean Deg. of React. = lambda
-                    Mean Velocities = [C1, Ca1, C2, Ca2, V2, C3, Ca3, V3]
-                    Pressure Ratio = P_02/P_01
-                    Areas = [A1, A2, A3]
-                    Root/Tip = [rt1, rt2, rt3]
-                    h = [h1, h2, h3]                
+                    gasParams = [alpha1,alpha2,alpha3,beta2,beta3,T0s_rev,Pr,Cw3,M3t,phi,psi_turb,Lambda]
+                    measurements = [rtRat1,rtRat2,rtRat3,h1,h2,h3]     
         '''
-        N = 340 #m/s, based on stress experience
+
         lambdaN = 0.05 # nozzle loss coefficient based on experience
 
         # Calculates the B3 and deg. of reaction
-        beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
-        Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2 
+        beta3 = np.arctan(np.tan(alpha3) + (1/phi))
+        Lambda = (2*phi*np.tan(beta3)- (psi_turb/2))/2 
         # iterates to find a suitable degree of reaction
-        if np.round(Lambda, 3) > 0.420:
-            while np.round(Lambda, 3) > 0.420:
+        if np.round(Lambda, 3) < 0.420:
+            while np.round(Lambda, 3) < 0.420:
                 alpha3 += np.deg2rad(5)
-                beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
-                Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2
+                beta3 = np.arctan(np.tan(alpha3) + (1/phi))
+                Lambda = (2*phi*np.tan(beta3)- (psi_turb/2))/2
         
         # Calculates B2 and a2
-        beta2 = np.arctan((1/(2*self.phi))*(psi_turb/2 - 2*Lambda))
-        alpha2 = np.arctan(np.tan(beta2) + (1/self.phi))
+        beta2 = np.arctan((1/(2*phi))*(psi_turb/2 - 2*Lambda))
+        alpha2 = np.arctan(np.tan(beta2) + (1/phi))
 
         # Calculates Ca2 and C2
-        Ca2 = Um*self.phi
+        Ca2 = Um*phi
         C2 = Ca2 / np.cos(alpha2)
 
         # Calculates the isentropic T2', T2 and p2
-        T2 = self.T_04 - (C2**2/(2*self.cp_h*1e3))
+        T2 = T_01 - (C2**2/(2*self.cp_h*1e3))
         T2prime = T2- lambdaN*(C2**2/(2*self.cp_h*1e3))
-        stagStaticRat = (self.T_04/T2prime)**(self.y_h/(self.y_h-1))
+        stagStaticRat = (T_01/T2prime)**(self.y_h/(self.y_h-1))
         CritPrat = 1.853
         if stagStaticRat > CritPrat:
             print('ask the child if he or she is choking')
 
-        P2 = self.T_04/stagStaticRat
+        P2 = P_01/stagStaticRat
 
         # Calculate the rho2 and A2
         rho2 = (P2*100)/(0.287*T2)      
@@ -647,30 +681,31 @@ class TurboMachineryComputation:
         Ca1 = C1 #since alpha1 = 0.0
 
         # Calculates rho1 and A1
-        T1 = self.T_04 - (C1**2/(2*self.cp_h*1e3))
-        P1 = self.P_04*(T1/self.T_04)**(self.y_h/(self.y_h-1))
+        T1 = T_01 - (C1**2/(2*self.cp_h*1e3))
+        P1 = P_01*(T1/self.T_04)**(self.y_h/(self.y_h-1))
         rho1 = (P1*100)/(0.287*T1)
         A1 = self.mdoth/(rho1*Ca1)
 
         # Calculates the outlet (station 3) conditions
-        T_03 = self.T_04 - T0s_rev
+        T_03 = T_01 - T0s_rev
         T3 = T_03 - (C3**2)/(2*self.cp_h*1e3)
 
-        # Calculates the P03 from the isentropic eff. (using P04 = P01 and T04 = T01) and P3 from isentropic
-        P_03 = self.P_04*(1 - (T0s_rev/(self.n_inf_t)))**(self.y_h/(self.y_h-1))
+        # Calculates the P03 from the isentropic eff. and P3 from isentropic
+        P_03 = P_01*(1 - (T0s_rev/(self.n_inf_t*T_01)))**(self.y_h/(self.y_h-1))
         P3 = P_03*(T3/T_03)**(self.y_h/(self.y_h-1))
 
         # Calculates the rho3, A3
         rho3 = (P3*100)/(0.287*T3)
         A3 = self.mdoth/(rho3*Ca3)
 
+        
         # Mean radius calculation
-        rm = Um/(2*np.pi*N)
+        rm = Um/(2*np.pi*self.N)
 
         # Calculates the h1-h3
-        h1 = (N/Um)*A1
-        h2 = (N/Um)*A2
-        h3 = (N/Um)*A3
+        h1 = (self.N/Um)*A1
+        h2 = (self.N/Um)*A2
+        h3 = (self.N/Um)*A3
 
         # Calculates the rt/rr
         rtRat1 = (rm + (h1/2))/(rm - (h1/2))
@@ -680,16 +715,26 @@ class TurboMachineryComputation:
         # Calculates the V2 and V3
         V2 = Ca2/np.cos(beta2)
         V3 = ((Um+(C3*np.cos(alpha3)))**2 + Ca3**2)**0.5
+
+        # Calculates the Cw2 and Cw3
+        Cw2 = Um + V2*np.sin(beta2)
+        Cw3 = C3*np.sin(alpha3)
+
+        # Calculates the M3t to check for shocks
+        alpha3tip = np.arctan((rm/(rm + h3/2))*np.tan(alpha3))
+        C3t = Ca3/np.cos(alpha3tip)
+        Ut = self.N*2*np.pi*(rm + h3/2)
+        V3t = ((Ut+C3t)**2 + Ca3**2)**0.5
+        T3t = T_03 - (C3t**2)/(2*self.cp_h*1e3)
+        M3t = V3t/(self.y_h*self.R*T3t)**0.5
         
         # Organizes return statements
-        Angles = np.array([alpha1, alpha2, alpha3, beta2, beta3])
-        meanLambda = Lambda
-        meanV = np.array([C1, Ca1, C2, Ca2, V2, C3, Ca3, V3])
-        Areas = np.array([A1, A2, A3])
-        RTrat = np.array([rtRat1, rtRat2, rtRat3])
-        Heights = np.array([h1, h2, h3])
+        Pr = P_03/P_01
         
-        return Angles, meanLambda, meanV, Areas, RTrat, Heights
+        gasParams = np.array([np.rad2deg(alpha1),np.rad2deg(alpha2),np.rad2deg(alpha3),np.rad2deg(beta2),np.rad2deg(beta3),T0s_rev,Pr,Cw3,M3t,phi,psi_turb,Lambda])
+        measurements = np.array([rtRat1,rtRat2,rtRat3,h1,h2,h3])
+        
+        return gasParams, measurements
     
     def velocitytriangle():
 
@@ -712,3 +757,11 @@ class TurboMachineryComputation:
         # Loading factor calculation curve fit
         a=0.847936849639078; b=0.15697659830655492; c=-0.2412700053204237
         return a + b*np.exp(c*stage)
+
+
+# backend = TurboMachineryComputation()
+# gasParams, measure = backend.fullturbine()
+# print('\nTurbine $\Delta$ T: {}'.format(dT0_turb))
+# print('\nStage $\Delta$ T: {} K'.format(T0s))
+# print('\nTip Mach Numbers: {}'.format(M))
+# print('No. Turb Stages = {}'.format(stages))
