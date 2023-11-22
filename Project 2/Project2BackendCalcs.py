@@ -406,19 +406,16 @@ class TurboMachineryComputation:
     def fullturbine(self):
         
         ##### Values to Toggle ####
-        Um = 360 #assumed mean blade speed based on experience, m/s
+        Um = 420 #assumed mean blade speed based on experience, m/s
         psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
-        phi_vals = [0.9, 0.78, 0.78] #stage flow coeff. values
+        phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
         lambda_vals = [0.5, 0.5, 0.5] #desired deg. of reaction values
 
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
         N = self.N
         lamdaN = 0.05 # assumed standard value
-        Um = 370 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
-        phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
-        lambda_vals = [0.5, 0.5, 0.5] #desired deg. of reaction values
+        
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
         
