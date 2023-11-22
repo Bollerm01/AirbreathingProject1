@@ -404,13 +404,21 @@ class TurboMachineryComputation:
 
 
     def fullturbine(self):
+        
+        ##### Values to Toggle ####
+        Um = 360 #assumed mean blade speed based on experience, m/s
+        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
+        phi_vals = [0.9, 0.78, 0.78] #stage flow coeff. values
+        lambda_vals = [0.5, 0.5, 0.5] #desired deg. of reaction values
+
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
         N = self.N
-        Um = 375 #assumed mean blade speed based on experience, m/s
         lamdaN = 0.05 # assumed standard value
+        Um = 370 #assumed mean blade speed based on experience, m/s
         psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
         phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
+        lambda_vals = [0.5, 0.5, 0.5] #desired deg. of reaction values
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
         
@@ -436,7 +444,7 @@ class TurboMachineryComputation:
         P_011 = self.P_04
         T_011 = self.T_04
 
-        gasParamsStg1, measurementsStg1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_vals[0])
+        gasParamsStg1, measurementsStg1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_vals[0], lambda_vals[0])
 
         '''# Calculates the B3 and deg. of reaction
         beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
@@ -537,7 +545,7 @@ class TurboMachineryComputation:
         T_012 = self.T_04 - T0s_rev1
         P_012 = self.P_04*gasParamsStg1[6] 
 
-        gasParamsStg2, measurementsStg2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0s_rev2, psi_turb2, phi_vals[1])
+        gasParamsStg2, measurementsStg2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0s_rev2, psi_turb2, phi_vals[1], lambda_vals[1])
 
         ################ Stage 3 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
@@ -560,7 +568,7 @@ class TurboMachineryComputation:
         P_013 = self.P_04*gasParamsStg1[6]*gasParamsStg2[6] 
 
 
-        gasParamsStg3, measurementsStg3 = self.turbinestage(alpha1, alpha3, Um, T_013, P_013, T0s_rev3, psi_turb3, phi_vals[2])
+        gasParamsStg3, measurementsStg3 = self.turbinestage(alpha1, alpha3, Um, T_013, P_013, T0s_rev3, psi_turb3, phi_vals[2], lambda_vals[2])
         
         # Adds the data to Pandas DFs 
         gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2,gasParamsStg3]),3)
@@ -625,7 +633,7 @@ class TurboMachineryComputation:
         
         return data, s_data, p03, T02, diffusion
     
-    def turbinestage(self, alpha1, alpha3, Um, T_01, P_01, T0s_rev, psi_turb, phi):
+    def turbinestage(self, alpha1, alpha3, Um, T_01, P_01, T0s_rev, psi_turb, phi, desired_lambda):
         '''
             Inputs: alpha1 = stage inlet angle
                     alpha3 = stage exit angle
@@ -635,6 +643,7 @@ class TurboMachineryComputation:
                     T0s_rev = revised stage temp drop
                     psi_turb = turbine temp drop coeff.
                     phi = flow coefficient (>=0.78)
+                    desired_lambda = desired deg. of reaction (~0.5)
             Outputs:
                     gasParams = [alpha1,alpha2,alpha3,beta2,beta3,T0s_rev,Pr,Cw3,M3t,phi,psi_turb,Lambda]
                     measurements = [rtRat1,rtRat2,rtRat3,h1,h2,h3]     
@@ -646,9 +655,9 @@ class TurboMachineryComputation:
         beta3 = np.arctan(np.tan(alpha3) + (1/phi))
         Lambda = (2*phi*np.tan(beta3)- (psi_turb/2))/2 
         # iterates to find a suitable degree of reaction
-        if np.round(Lambda, 3) < 0.420:
-            while np.round(Lambda, 3) < 0.420:
-                alpha3 += np.deg2rad(5)
+        if np.round(Lambda, 3) < desired_lambda:
+            while np.round(Lambda, 3) < desired_lambda:
+                alpha3 += np.deg2rad(0.1)
                 beta3 = np.arctan(np.tan(alpha3) + (1/phi))
                 Lambda = (2*phi*np.tan(beta3)- (psi_turb/2))/2
         
