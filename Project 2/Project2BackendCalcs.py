@@ -443,7 +443,9 @@ class TurboMachineryComputation:
         P_011 = self.P_04
         T_011 = self.T_04
 
-        gasParamsStg1, measurementsStg1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_vals[0], lambda_vals[0])
+        gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_vals[0], lambda_vals[0])
+
+        rootVals1, tipVals1 = self.turb_root_tip(gasParamsStg1, measurementsStg1, Um, axialV1)
 
         '''# Calculates the B3 and deg. of reaction
         beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
@@ -544,7 +546,9 @@ class TurboMachineryComputation:
         T_012 = self.T_04 - T0s_rev1
         P_012 = self.P_04*gasParamsStg1[6] 
 
-        gasParamsStg2, measurementsStg2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0s_rev2, psi_turb2, phi_vals[1], lambda_vals[1])
+        gasParamsStg2, measurementsStg2, axialV2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0s_rev2, psi_turb2, phi_vals[1], lambda_vals[1])
+
+        rootVals2, tipVals2 = self.turb_root_tip(gasParamsStg2, measurementsStg2, Um, axialV2)
 
         ################ Stage 3 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
@@ -567,17 +571,23 @@ class TurboMachineryComputation:
         P_013 = self.P_04*gasParamsStg1[6]*gasParamsStg2[6] 
 
 
-        gasParamsStg3, measurementsStg3 = self.turbinestage(alpha1, alpha3, Um, T_013, P_013, T0s_rev3, psi_turb3, phi_vals[2], lambda_vals[2])
+        gasParamsStg3, measurementsStg3, axialV3 = self.turbinestage(alpha1, alpha3, Um, T_013, P_013, T0s_rev3, psi_turb3, phi_vals[2], lambda_vals[2])
+
+        rootVals3, tipVals3 = self.turb_root_tip(gasParamsStg3, measurementsStg3, Um, axialV3)
         
         # Adds the data to Pandas DFs 
         gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2,gasParamsStg3]),3)
         measurementsData = np.round(np.array([measurementsStg1,measurementsStg2,measurementsStg3]),3)
+        rootData = np.round(np.array([rootVals1, rootVals2, rootVals3]),3)
+        tipData = np.round(np.array([tipVals1, tipVals2, tipVals3]),3)
         
         gasParamDF = pd.DataFrame(gasParamData, index=[1,2,3], columns=['α1','α2','α3','β2','β3','ΔT0s','P02/P01','Cw3','M3t','Φ','ψ','Λ'])
-        measurementsDF = pd.DataFrame(measurementsData, index=[1,2,3], columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3'])
-
+        measurementsDF = pd.DataFrame(measurementsData, index=[1,2,3], columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3','rm'])
+        rootDF = pd.DataFrame(rootData, index=[1,2,3], columns=['Ur2', 'Ur3', 'alpha2r', 'alpha3r', 'beta2r', 'beta3r', 'Cw1r', 'V2r', 'C2r', 'Cw2r', 'V3r', 'C3r', 'Cw3r', 'phiRoot', 'psiRoot', 'lambdaRoot'])
+        tipDF = pd.DataFrame(tipData, index=[1,2,3], columns=['Ut2', 'Ut3', 'alpha2t', 'alpha3t', 'beta2t', 'beta3t', 'Cw1t', 'V2t', 'C2t', 'Cw2t', 'V3t', 'C3t', 'Cw3t', 'phiTip', 'psiTip', 'lambdaTip'])
+        
         ## START HERE WITH CHECKING VALUES AFTER
-        return gasParamDF, measurementsDF, stage_est, Um
+        return gasParamDF, measurementsDF, rootDF, tipDF, stage_est, Um
     
 
 
@@ -645,7 +655,8 @@ class TurboMachineryComputation:
                     desired_lambda = desired deg. of reaction (~0.5)
             Outputs:
                     gasParams = [alpha1,alpha2,alpha3,beta2,beta3,T0s_rev,Pr,Cw3,M3t,phi,psi_turb,Lambda]
-                    measurements = [rtRat1,rtRat2,rtRat3,h1,h2,h3]     
+                    measurements = [rtRat1,rtRat2,rtRat3,h1,h2,h3,rm]     
+                    axialVelocities = [Ca1,Cw1,Ca2,Cw2,Cw3]
         '''
 
         lambdaN = 0.05 # nozzle loss coefficient based on experience
@@ -686,7 +697,7 @@ class TurboMachineryComputation:
         Ca3 = Ca2
         C3 = Ca3/np.cos(alpha3)
         C1 = C3
-        Ca1 = C1 #since alpha1 = 0.0
+        Ca1 = C1*np.cos(alpha1) 
 
         # Calculates rho1 and A1
         T1 = T_01 - (C1**2/(2*self.cp_h*1e3))
@@ -724,7 +735,8 @@ class TurboMachineryComputation:
         V2 = Ca2/np.cos(beta2)
         V3 = ((Um+(C3*np.cos(alpha3)))**2 + Ca3**2)**0.5
 
-        # Calculates the Cw2 and Cw3
+        # Calculates the Cw1, Cw2 and Cw3
+        Cw1 = C1*np.sin(alpha1)
         Cw2 = Um + V2*np.sin(beta2)
         Cw3 = C3*np.sin(alpha3)
 
@@ -740,13 +752,72 @@ class TurboMachineryComputation:
         Pr = P_03/P_01
         
         gasParams = np.array([np.rad2deg(alpha1),np.rad2deg(alpha2),np.rad2deg(alpha3),np.rad2deg(beta2),np.rad2deg(beta3),T0s_rev,Pr,Cw3,M3t,phi,psi_turb,Lambda])
-        measurements = np.array([rtRat1,rtRat2,rtRat3,h1,h2,h3])
+        measurements = np.array([rtRat1,rtRat2,rtRat3,h1,h2,h3,rm])
         
-        return gasParams, measurements
+        return gasParams, measurements, np.array([Ca1,Cw1,Ca2,Cw2,Cw3])
     
-    def velocitytriangle():
+    def turb_root_tip(self, meanParams, meanMeasurements, Um, axialVelocities):
+        # Pulls the mean values
+        [alpha1m, alpha2m, alpha3m, beta2m, beta3m, phiMean, psiMean] = np.deg2rad([meanParams[0],meanParams[1],meanParams[2],meanParams[3],meanParams[4],meanParams[9],meanParams[10]])
+        [h1, h2, h3, rm] = [meanMeasurements[3], meanMeasurements[4], meanMeasurements[5], meanMeasurements[6]]
+        [Ca1,Cw1,Ca2,Cw2,Cw3] = [axialVelocities[0],axialVelocities[1], axialVelocities[2], axialVelocities[3], axialVelocities[4]]
+        Ca3 = Ca2
+        # Calculate radii
+        rt1 = rm + (h1/2); rr1 = rm - (h1/2)
+        rt2 = rm + (h2/2); rr2 = rm - (h2/2)
+        rt3 = rm + (h3/2); rr3 = rm - (h3/2)
+        # Calculate blade speed
+        Ut2 = rt2/rm * Um; Ur2 = rr2/rm * Um
+        Ut3 = rt3/rm * Um; Ur3 = rr3/rm * Um
+        # Calculates whirl velocities
+        # Cw2t = rt1/rm * Cw2; Cw2r = rr1/rm * Cw2
+        # Cw3t = rt2/rm * Cw3; Cw3r = rr2/rm * Cw3
 
-        return
+        # Calculates the angles
+        ######## Root ########
+        alpha2r = np.arctan((rm/rr2)*np.tan(alpha2m))
+        alpha3r = np.arctan((rm/rr3)*np.tan(alpha3m))
+        beta2r = np.arctan(np.tan(alpha2r) - Ur2/Ca2)
+        beta3r = np.arctan(np.tan(alpha3r) + Ur3/Ca3)
+
+        ######## Tip ########
+        alpha2t = np.arctan((rm/rt2)*np.tan(alpha2m))
+        alpha3t = np.arctan((rm/rt3)*np.tan(alpha3m))
+        beta2t = np.arctan(np.tan(alpha2t) - Ut2/Ca2)
+        beta3t = np.arctan(np.tan(alpha3t) + Ut3/Ca3)
+        
+        # Calculates the velocities
+        ######## Root ########
+        V2r = Ca2/np.cos(beta2r)
+        Cw2r = Ur2 + V2r*np.sin(beta2r)
+        C2r = (Cw2r**2 + Ca2**2)**0.5
+        C3r = Ca3/np.cos(alpha3r)
+        Cw3r = C3r*np.sin(alpha3r)
+        V3r = (Cw3r**2 + Ca3**2)**0.5
+        Cw1r = (rm/rr1)*Cw1
+
+        ######## Tip ########
+        V2t = Ca2/np.cos(beta2t)
+        Cw2t = Ut2 + V2t*np.sin(beta2t)
+        C2t = (Cw2t**2 + Ca2**2)**0.5
+        C3t = Ca3/np.cos(alpha3t)
+        Cw3t = C3t*np.sin(alpha3t)
+        V3t = (Cw3t**2 + Ca3**2)**0.5
+        Cw1t = (rm/rt1)*Cw1
+        
+        # Calculates the phi, psi, and the lambda for the tip and the root
+        phiTip = np.max(np.array([Ca2/Ut2, Ca3/Ut3]))
+        phiRoot = np.max(np.array([Ca2/Ur2, Ca3/Ur3]))
+        psiTip = 2*phiTip*(np.tan(beta2t)+ np.tan(beta3t))
+        psiRoot = 2*phiRoot*(np.tan(beta2r)+ np.tan(beta3r))
+        lambdaTip = (phiTip/2)*(np.tan(beta3t) - np.tan(beta2t))
+        lambdaRoot = (phiRoot/2)*(np.tan(beta3r) - np.tan(beta2r))
+
+        # Organizes return
+        rootValues = np.array([Ur2, Ur3, np.rad2deg(alpha2r), np.rad2deg(alpha3r), np.rad2deg(beta2r), np.rad2deg(beta3r), Cw1r, V2r, C2r, Cw2r, V3r, C3r, Cw3r, phiRoot, psiRoot, lambdaRoot])
+        tipValues = np.array([Ut2, Ut3, np.rad2deg(alpha2t), np.rad2deg(alpha3t), np.rad2deg(beta2t), np.rad2deg(beta3t), Cw1t, V2t, C2t, Cw2t, V3t, C3t, Cw3t, phiTip, psiTip, lambdaTip])
+
+        return rootValues, tipValues
     
     def comp_root_tip(self, meantable,sizingtable,rm):
         for i in range(0,len(meantable)):
