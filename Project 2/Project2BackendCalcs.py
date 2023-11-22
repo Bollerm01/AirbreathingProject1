@@ -140,12 +140,12 @@ class TurboMachineryComputation:
         p031 = self.P_02*(1 + (self.n_inf_c*delta_T0)/self.T_02)**(self.y_c/(self.y_c-1))
         # Inlet tip Mach number
         T2 = self.T_02 - self.C_a**2/(2*self.cp_c*1000)
-        M11t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T2)
+        # M11t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T2)
         # Outlet tip Mach number
         C21 = self.C_a/np.cos(alpha2)
         T021 = self.T_02 + delta_T0
         T21 = T021 - C21**2/(2*self.cp_c*1e3)
-        M21t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T21)
+        # M21t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T21)
         # Approximate Degree of Reaction at the mean radius
         React = 1 - (C_w1+C_w2)/(2*self.U_m)
         # Radius at the inlet to the rotor
@@ -168,7 +168,7 @@ class TurboMachineryComputation:
 
         sizingtable = pd.DataFrame(np.round([np.array([rr_rt1,rr_rt,0.0, h11,h21,0.0])],5),columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3'])
 
-        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([M11t]),np.array([M21t,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Loading'])
+        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([0.0]),np.array([0.0,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Loading'])
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
@@ -195,13 +195,13 @@ class TurboMachineryComputation:
         # Calculate inlet Mach number
         C21 = self.C_a/np.cos(alpha1)
         T21 = T021 - C21**2/(2*self.cp_c*1e3)
-        M12t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T21)
+        # M12t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T21)
         # Calculate outlet Mach number
         C22 = self.C_a/np.cos(alpha2)
         T22 = T022 - C22**2/(2*self.cp_c*1e3)
-        M22t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T22)
+        # M22t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T22)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, p032/p031, p032, M12t, M22t,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, p032/p031, p032, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
         # Radius at the inlet to the rotor
         T12 = T021 - C21**2/(2*self.cp_c*1e3)
         p12 = p031*(T12/T021)**(self.y_c/(self.y_c-1))
@@ -250,13 +250,13 @@ class TurboMachineryComputation:
         # Calculate inlet Mach number
         C22 = self.C_a/np.cos(alpha1)
         T22 = T022 - C22**2/(2*self.cp_c*1e3)
-        M13t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T22)
+        # M13t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T22)
         # Calculate outlet Mach number
         C23 = self.C_a/np.cos(alpha2)
         T23 = T023 - C23**2/(2*self.cp_c*1e3)
-        M23t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T23)
+        # M23t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T23)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, p033/p032, p033, M13t, M23t,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, p033/p032, p033, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
         # Radius at the inlet to the rotor
         p13 = p032*(T22/T022)**(self.y_c/(self.y_c-1))
         rho13 = p13*1e5/(T22*self.R)
@@ -330,6 +330,9 @@ class TurboMachineryComputation:
         # Calculate absolute blade angles
         alpha1 = np.arctan(self.U_m/self.C_a - np.tan(beta1))
         alpha2 = np.arctan(self.U_m/self.C_a - np.tan(beta2))
+        # Calculate whirl velocities
+        C_w1 = self.C_a*np.tan(alpha1)
+        C_w2 = self.C_a*np.tan(alpha2)
         # Calculation diffusion for de Haller criteria
         diffusion = np.cos(beta1)/np.cos(beta2)
         # Calculate outlet pressure
@@ -339,13 +342,13 @@ class TurboMachineryComputation:
         # Calculate inlet Mach number
         C2 = self.C_a/np.cos(alpha1)
         T1 = T01 - C2**2/(2*self.cp_c*1e3)
-        M1t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T1)
+        # M1t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T1)
         # Calculate outlet Mach number
         C23 = self.C_a/np.cos(alpha2)
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
-        M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
+        # M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
          # Radius at the inlet to the rotor
         C1 = self.C_a/np.cos(alpha1)
         T1 = T01 - C1**2/(2*self.cp_c*1e3)
@@ -393,14 +396,16 @@ class TurboMachineryComputation:
             s_diffusion = np.cos(alpha2)/np.cos(alpha3)
             meantable['C3/C2'][i] = np.round(s_diffusion,3)
 
-        tiproot_table = self.comp_root_tip(meantable=meantable,sizingtable=sizingtable,rm=self.rm)        
+        tiproot_table, whirl_table, vel_table, meantable = self.comp_root_tip(meantable=meantable,sizingtable=sizingtable,rm=self.rm)        
 
         sizingtable.index = np.arange(1, len(sizingtable)+1)
         meantable.index = np.arange(1, len(meantable)+1)
         tiproot_table.index = np.arange(1, len(tiproot_table)+1)
+        whirl_table.index = np.arange(1, len(whirl_table)+1)
+        vel_table.index = np.arange(1, len(vel_table)+1)
         # meantable.index.name = 'Stage'
         # meantable.reset_index().to_string(index=False)
-        return meantable, sizingtable, tiproot_table
+        return meantable, sizingtable, tiproot_table, whirl_table, vel_table
        
 
 
@@ -612,13 +617,13 @@ class TurboMachineryComputation:
         # Calculate inlet Mach number
         C2 = self.C_a/np.cos(alpha1)
         T1 = T01 - C2**2/(2*self.cp_c*1e3)
-        M1t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T1)
+        # M1t = self.C_a/np.cos(beta1)/np.sqrt(self.y_c*self.R*T1)
         # Calculate outlet Mach number
         C23 = self.C_a/np.cos(alpha2)
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
-        M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
+        # M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, M1t, M2t,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
         # Radius at the inlet to the rotor
         C1 = self.C_a/np.cos(alpha1)
         T1 = T01 - C1**2/(2*self.cp_c*1e3)
@@ -825,6 +830,11 @@ class TurboMachineryComputation:
             h1 = sizingtable['h1'][i]
             h2 = sizingtable['h2'][i]
             h3 = sizingtable['h3'][i]
+            # Pull mean blade angles
+            alpha1m = meantable['alpha1'][i]
+            alpha2m = meantable['alpha2'][i]
+            beta1m = meantable['beta1'][i]
+            beta2m = meantable['beta2'][i]
             # Calculate radii
             rt1 = rm + (h1/2); rr1 = rm - (h1/2)
             rt2 = rm + (h2/2); rr2 = rm - (h2/2)
@@ -834,20 +844,49 @@ class TurboMachineryComputation:
             Ut2 = rt2/rm * self.U_m; Ur2 = rr2/rm * self.U_m
             # Calculate whirl velocities
             Cw1 = meantable['Cw1'][i]; Cw2 = meantable['Cw2'][i]
-            Cw1t = rt1/rm * Cw1; Cw1r = rr1/rm * Cw1
-            Cw2t = rt2/rm * Cw2; Cw2r = rr2/rm * Cw2
+            Cw1t = rm/rt1 * Cw1; Cw1r = rm/rr1 * Cw1
+            Cw2t = rm/rt2 * Cw2; Cw2r = rm/rr2 * Cw2
             alpha1t = np.arctan(Cw1t/self.C_a); alpha1r = np.arctan(Cw1r/self.C_a)
             beta1t = np.arctan((Ut1-Cw1t)/self.C_a); beta1r = np.arctan((Ur1-Cw1r)/self.C_a)
             alpha2t = np.arctan(Cw2t/self.C_a); alpha2r = np.arctan(Cw2r/self.C_a)
             beta2t = np.arctan((Ut2-Cw2t)/self.C_a); beta2r = np.arctan((Ur2-Cw2r)/self.C_a)
-            # Update table
+            # Calculate absolute velocities
+            C1m = self.C_a/np.cos(np.deg2rad(alpha1m)); C2m = self.C_a/np.cos(np.deg2rad(alpha2m))
+            C1t = self.C_a/np.cos(alpha1t); C2t = self.C_a/np.cos(alpha2t)
+            C1r = self.C_a/np.cos(alpha1r); C2r = self.C_a/np.cos(alpha2r)
+            # Calculate relative velocities
+            V1m = self.C_a/np.cos(np.deg2rad(beta1m)); V2m = self.C_a/np.cos(np.deg2rad(beta2m))
+            V1t = self.C_a/np.cos(beta1t); V2t = self.C_a/np.cos(beta2t)
+            V1r = self.C_a/np.cos(beta1r); V2r = self.C_a/np.cos(beta2r)
+            # Get temperatures
             if i == 0:
-                tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,alpha1r,beta1t,beta1r,alpha2t,alpha2r,beta2t,beta2r])]),2),columns=['alpha1_t','alpha1_r','beta1_t','beta1_r','alpha2_t','alpha2_r','beta2_t','beta2_r'])
+                T01 = self.T_02
+                T02 = meantable['T02'][i]
             else:
-                data = np.round(np.rad2deg(np.array([alpha1t,alpha1r,beta1t,beta1r,alpha2t,alpha2r,beta2t,beta2r])),2)
+                T01 = meantable['T02'][i-1]
+                T02 = meantable['T02'][i]
+            # Calculate Mach number
+            T1 = T01 - C1t**2/(2*self.cp_c*1e3)
+            T2 = T02 - C2t**2/(2*self.cp_c*1e3)
+            M1t = V1t/np.sqrt(self.y_c*self.R*T1)
+            M2t = V2t/np.sqrt(self.y_c*self.R*T2)
+            # Update tables
+            if i == 0:
+                tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r])]),2),columns=['alpha1_t','alpha1_m','alpha1_r','beta1_t','beta1_m','beta1_r','alpha2_t','alpha2_m','alpha2_r','beta2_t','beta2_m','beta2_r'])
+                whirl_table = pd.DataFrame(np.round([np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r])],2),columns=['Cw1_t','Cw1_m','Cw1_r','Cw2_t','Cw2_m','Cw2_r'])
+                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,V1t,V1m,V1r,V2t,V2m,V2r])],2),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r'])
+            else:
+                data = np.round(np.rad2deg(np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r])),2)
+                data2 = np.round(np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r]),2)
+                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,V1t,V1m,V1r,V2t,V2m,V2r]),2)
                 tiproot_table.loc[len(tiproot_table)] = data
+                whirl_table.loc[len(whirl_table)] = data2
+                vel_table.loc[len(vel_table)] = data3           
 
-        return tiproot_table
+            meantable['M1t'][i] = np.round(M1t,3)
+            meantable['M2t'][i] = np.round(M2t,3)
+
+        return tiproot_table, whirl_table, vel_table, meantable
     
     def workdone(self,stage):
         # Loading factor calculation curve fit
@@ -861,3 +900,5 @@ class TurboMachineryComputation:
 # print('\nStage $\Delta$ T: {} K'.format(T0s))
 # print('\nTip Mach Numbers: {}'.format(M))
 # print('No. Turb Stages = {}'.format(stages))
+stuff = TurboMachineryComputation()
+morestuff = stuff.fullcompressor()
