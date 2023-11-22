@@ -413,19 +413,16 @@ class TurboMachineryComputation:
     def fullturbine(self):
         
         ##### Values to Toggle ####
-        Um = 360 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
-        phi_vals = [0.9, 0.78, 0.78] #stage flow coeff. values
-        lambda_vals = [0.5, 0.5, 0.5] #desired deg. of reaction values
+        Um = 375 #assumed mean blade speed based on experience, m/s
+        psi_max = [3.05, 3.3, 3.3] #stage max temp drop coeff. values
+        phi_vals = [0.85, 0.90, 0.78] #stage flow coeff. values
+        lambda_vals = [0.57, 0.95, 0.5] #desired deg. of reaction values
 
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
         N = self.N
         lamdaN = 0.05 # assumed standard value
-        Um = 370 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
-        phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
-        lambda_vals = [0.5, 0.5, 0.5] #desired deg. of reaction values
+        
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
         
@@ -439,7 +436,7 @@ class TurboMachineryComputation:
         T0s_rev1 = T0s_est
         if np.round(psi_turb1, 2) > psi_max[0]:
             while np.round(psi_turb1, 2) > psi_max[0]:
-                T0s_rev1 -= 5
+                T0s_rev1 -= 0.1
                 psi_turb1 = (2*self.cp_h*1e3*T0s_rev1)/(Um**2)
         
         stage_est = (dT0_turb/T0s_rev1)
@@ -543,7 +540,7 @@ class TurboMachineryComputation:
         T0s_rev2 = T0s_est
         if np.round(psi_turb2, 2) > psi_max[1]:
             while np.round(psi_turb2, 2) > psi_max[1]:
-                T0s_rev2 -= 5
+                T0s_rev2 -= 0.1
                 psi_turb2 = (2*self.cp_h*1e3*T0s_rev2)/(Um**2)
         
         # Assumptions for second stage 
@@ -565,7 +562,7 @@ class TurboMachineryComputation:
         T0s_rev3 = T0s_est
         if np.round(psi_turb3, 2) > psi_max[2]:
             while np.round(psi_turb3, 2) > psi_max[2]:
-                T0s_rev3 -= 5
+                T0s_rev3 -= 0.1
                 psi_turb3 = (2*self.cp_h*1e3*T0s_rev3)/(Um**2)
 
         # Assumptions for the third stage
