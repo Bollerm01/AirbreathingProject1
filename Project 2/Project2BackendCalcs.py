@@ -749,11 +749,15 @@ class TurboMachineryComputation:
 
         return
     
-    def comp_root_tip(self, meantable,sizingtable,rm):
+    def comp_root_tip(self, meantable,sizingtable,rm,N):
         for i in range(0,len(meantable)):
             h1 = sizingtable['h1'][i]
             h2 = sizingtable['h2'][i]
             h3 = sizingtable['h3'][i]
+            rt1 = rm + (h1/2); rr1 = rm - (h1/2)
+            rt2 = rm + (h2/2); rr2 = rm - (h2/2)
+            rt3 = rm + (h3/2); rr3 = rm - (h3/2)
+            
             
 
         return
