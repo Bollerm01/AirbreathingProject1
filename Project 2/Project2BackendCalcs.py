@@ -124,7 +124,7 @@ class TurboMachineryComputation:
         # First stage calculation
         delta_T0 = 30 ## Desired temperature rise per stage for the first stage 
         delta_C_w = self.cp_c*1e3*delta_T0/(self.lam*self.U_m)
-        self.lam = self.loadingfactor(1)
+        self.lam = self.workdone(1) ## Update work done factor
         # Whirl velocities
         C_w1 = self.C_a*np.tan(alpha1)
         C_w2 = delta_C_w + C_w1
@@ -173,8 +173,8 @@ class TurboMachineryComputation:
 
         ################ Stage 2 ################
         delta_T0 = 29 ## Desired temperature rise for the second stage
-        React = 0.7 ## Degree of reaction for the second stage
-        self.lam = self.loadingfactor(2) ## Update loading coefficient
+        React = 0.65 ## Degree of reaction for the second stage
+        self.lam = self.workdone(2) ## Update work done factor
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
         B2 = React*2*self.U_m/self.C_a
@@ -229,7 +229,7 @@ class TurboMachineryComputation:
         ################ Stage 3 ################
         delta_T0 = 29 ## Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage
-        self.lam = self.loadingfactor(3) ## Update loading coefficient
+        self.lam = self.workdone(3) ## Update work done factor
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
         B2 = React*2*self.U_m/self.C_a
@@ -290,7 +290,7 @@ class TurboMachineryComputation:
 
         ################ Intermediate Stages ################
         while test3_p03 < final_P03:
-            self.lam = self.loadingfactor(ns)
+            self.lam = self.workdone(ns) ## Update work done factor
             ns += 1
 
             delta_T0 = 100.0
@@ -321,7 +321,7 @@ class TurboMachineryComputation:
         ################ Last Stage ################
         delta_T0 = ((15.0*self.P_02/p01)**((self.y_c-1)/self.y_c)-1)*T01/self.n_inf_c # Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage   
-        self.lam = self.loadingfactor(15)     
+        self.lam = self.workdone(15) ## Update work done factor 
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
         B2 = React*2*self.U_m/self.C_a
@@ -392,13 +392,15 @@ class TurboMachineryComputation:
             alpha3 = np.deg2rad(meantable['alpha3'][i])
             s_diffusion = np.cos(alpha2)/np.cos(alpha3)
             meantable['C3/C2'][i] = np.round(s_diffusion,3)
-        
+
+        tiproot_table = self.comp_root_tip(meantable=meantable,sizingtable=sizingtable,rm=self.rm)        
 
         sizingtable.index = np.arange(1, len(sizingtable)+1)
         meantable.index = np.arange(1, len(meantable)+1)
+        tiproot_table.index = np.arange(1, len(tiproot_table)+1)
         # meantable.index.name = 'Stage'
         # meantable.reset_index().to_string(index=False)
-        return meantable, sizingtable
+        return meantable, sizingtable, tiproot_table
        
 
 
@@ -740,20 +742,37 @@ class TurboMachineryComputation:
 
         return
     
-    def comp_root_tip(self, meantable,sizingtable,rm,N):
+    def comp_root_tip(self, meantable,sizingtable,rm):
         for i in range(0,len(meantable)):
+            # Pull blade heights
             h1 = sizingtable['h1'][i]
             h2 = sizingtable['h2'][i]
             h3 = sizingtable['h3'][i]
+            # Calculate radii
             rt1 = rm + (h1/2); rr1 = rm - (h1/2)
             rt2 = rm + (h2/2); rr2 = rm - (h2/2)
             rt3 = rm + (h3/2); rr3 = rm - (h3/2)
-            
-            
+            # Calculate blade speed
+            Ut1 = rt1/rm * self.U_m; Ur1 = rr1/rm * self.U_m
+            Ut2 = rt2/rm * self.U_m; Ur2 = rr2/rm * self.U_m
+            # Calculate whirl velocities
+            Cw1 = meantable['Cw1'][i]; Cw2 = meantable['Cw2'][i]
+            Cw1t = rt1/rm * Cw1; Cw1r = rr1/rm * Cw1
+            Cw2t = rt2/rm * Cw2; Cw2r = rr2/rm * Cw2
+            alpha1t = np.arctan(Cw1t/self.C_a); alpha1r = np.arctan(Cw1r/self.C_a)
+            beta1t = np.arctan((Ut1-Cw1t)/self.C_a); beta1r = np.arctan((Ur1-Cw1r)/self.C_a)
+            alpha2t = np.arctan(Cw2t/self.C_a); alpha2r = np.arctan(Cw2r/self.C_a)
+            beta2t = np.arctan((Ut2-Cw2t)/self.C_a); beta2r = np.arctan((Ur2-Cw2r)/self.C_a)
+            # Update table
+            if i == 0:
+                tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,alpha1r,beta1t,beta1r,alpha2t,alpha2r,beta2t,beta2r])]),2),columns=['alpha1_t','alpha1_r','beta1_t','beta1_r','alpha2_t','alpha2_r','beta2_t','beta2_r'])
+            else:
+                data = np.round(np.rad2deg(np.array([alpha1t,alpha1r,beta1t,beta1r,alpha2t,alpha2r,beta2t,beta2r])),2)
+                tiproot_table.loc[len(tiproot_table)] = data
 
-        return
+        return tiproot_table
     
-    def loadingfactor(self,stage):
+    def workdone(self,stage):
         # Loading factor calculation curve fit
         a=0.847936849639078; b=0.15697659830655492; c=-0.2412700053204237
         return a + b*np.exp(c*stage)
