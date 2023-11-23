@@ -413,10 +413,10 @@ class TurboMachineryComputation:
     def fullturbine(self):
         
         ##### Values to Toggle ####
-        Um = 375 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.05, 3.3, 3.3] #stage max temp drop coeff. values
-        phi_vals = [0.85, 0.90, 0.78] #stage flow coeff. values
-        lambda_vals = [0.57, 0.95, 0.5] #desired deg. of reaction values
+        Um = 369 #assumed mean blade speed based on experience, m/s
+        psi_max = [3.2, 3.3, 3.3] #stage max temp drop coeff. values
+        phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
+        lambda_vals = [0.41, 0.91, 0.5] #desired deg. of reaction values
 
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
@@ -434,9 +434,9 @@ class TurboMachineryComputation:
         psi_turb1 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
         # iteration to find the stage drop below the loading coefficient
         T0s_rev1 = T0s_est
-        if np.round(psi_turb1, 2) > psi_max[0]:
-            while np.round(psi_turb1, 2) > psi_max[0]:
-                T0s_rev1 -= 0.1
+        if np.round(psi_turb1, 3) > psi_max[0]:
+            while np.round(psi_turb1, 3) > psi_max[0]:
+                T0s_rev1 -= 0.01
                 psi_turb1 = (2*self.cp_h*1e3*T0s_rev1)/(Um**2)
         
         stage_est = (dT0_turb/T0s_rev1)
@@ -540,9 +540,9 @@ class TurboMachineryComputation:
         psi_turb2 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
         # iteration to find the stage drop below the loading coefficient
         T0s_rev2 = T0s_est
-        if np.round(psi_turb2, 2) > psi_max[1]:
-            while np.round(psi_turb2, 2) > psi_max[1]:
-                T0s_rev2 -= 0.1
+        if np.round(psi_turb2, 3) > psi_max[1]:
+            while np.round(psi_turb2, 3) > psi_max[1]:
+                T0s_rev2 -= 0.01
                 psi_turb2 = (2*self.cp_h*1e3*T0s_rev2)/(Um**2)
         
         # Assumptions for second stage 
@@ -564,9 +564,9 @@ class TurboMachineryComputation:
         psi_turb3 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
         # iteration to find the stage drop below the loading coefficient
         T0s_rev3 = T0s_est
-        if np.round(psi_turb3, 2) > psi_max[2]:
-            while np.round(psi_turb3, 2) > psi_max[2]:
-                T0s_rev3 -= 0.1
+        if np.round(psi_turb3, 3) > psi_max[2]:
+            while np.round(psi_turb3, 3) > psi_max[2]:
+                T0s_rev3 -= 0.01
                 psi_turb3 = (2*self.cp_h*1e3*T0s_rev3)/(Um**2)
 
         # Assumptions for the third stage
@@ -593,6 +593,7 @@ class TurboMachineryComputation:
         
         ## START HERE WITH CHECKING VALUES AFTER
         return gasParamDF, measurementsDF, rootDF, tipDF, stage_est, Um
+        # return gasParamDF, measurementsDF, stage_est, Um
     
 
 
@@ -672,7 +673,7 @@ class TurboMachineryComputation:
         # iterates to find a suitable degree of reaction
         if np.round(Lambda, 3) < desired_lambda:
             while np.round(Lambda, 3) < desired_lambda:
-                alpha3 += np.deg2rad(0.1)
+                alpha3 += np.deg2rad(0.01)
                 beta3 = np.arctan(np.tan(alpha3) + (1/phi))
                 Lambda = (2*phi*np.tan(beta3)- (psi_turb/2))/2
         
@@ -900,5 +901,5 @@ class TurboMachineryComputation:
 # print('\nStage $\Delta$ T: {} K'.format(T0s))
 # print('\nTip Mach Numbers: {}'.format(M))
 # print('No. Turb Stages = {}'.format(stages))
-stuff = TurboMachineryComputation()
-morestuff = stuff.fullcompressor()
+# stuff = TurboMachineryComputation()
+# morestuff = stuff.fullcompressor()
