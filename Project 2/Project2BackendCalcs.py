@@ -414,7 +414,7 @@ class TurboMachineryComputation:
         
         ##### Values to Toggle ####
         Um = 369 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.2, 3.3, 3.3] #stage max temp drop coeff. values
+        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
         phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
         lambda_vals = [0.41, 0.91, 0.5] #desired deg. of reaction values
 
