@@ -418,9 +418,15 @@ class TurboMachineryComputationV2:
         lambda_vals = [0.41, 0.91, 0.5] #desired deg. of reaction values'''
 
         # Specifies the ranges for iteration
-        psi_range = np.arange(2.0, 3.3, 0.01)
-        phi_range = np.arange(0.78, 1.2, 0.01)
-        lambda_range = np.arange(0.4,0.95,0.01)
+        psi_range1 = np.arange(2.0, 3.3, 0.01)
+        phi_range1 = np.arange(0.78, 1.2, 0.01)
+        lambda_range1 = np.arange(0.4,0.95,0.01)
+
+        phi_range2 = np.arange(0.78, 1.2, 0.01)
+        lambda_range2 = np.arange(0.4,0.95,0.01)
+        
+        dCw3 = 1000.0 # Sets a max for whirl to compare to 
+        desiredParams = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0]) # [psi1, phi1, lambda1, psi2, phi2, lambda2, Cw3]
         
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
@@ -442,35 +448,68 @@ class TurboMachineryComputationV2:
         P_011 = self.P_04
         T_011 = self.T_04
         
-        for i in range(len(psi_range)):
-            for j in range(len(phi_range)):
-                for k in range(len(lambda_range)):
-                    psi_temp = psi_range[i]
-                    phi_temp = phi_range[j]
-                    lambda_temp = lambda_range[k]
+        for i in range(len(psi_range1)):
+            for j in range(len(phi_range1)):
+                for k in range(len(lambda_range1)):
+                    psi_temp1 = psi_range1[i]
+                    phi_temp1 = phi_range1[j]
+                    lambda_temp1 = lambda_range1[k]
 
-                    # Calculates the temp drop coeff. for the first stage
-                    psi_turb1 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
-                    # iteration to find the stage drop below the loading coefficient
-                    T0s_rev1 = T0s_est
-                    if np.round(psi_turb1, 3) > psi_temp:
-                        while np.round(psi_turb1, 3) > psi_temp:
-                            T0s_rev1 -= 0.01
-                            psi_turb1 = (2*self.cp_h*1e3*T0s_rev1)/(Um**2)           
+                    # Calculates the temp drop for the first stage based on the psi
+                    T0s_rev1 = (psi_temp1*Um**2)/(2*self.cp_h)        
                     
+                    gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_temp1, phi_temp1, lambda_temp1)
+                    
+                    [h11, h21, h31, M31t] = [measurementsStg1(3), measurementsStg1(4), measurementsStg1(5), gasParamsStg1(8)]
+                    # checks if the geometry is satisfied before continuing 
+                    if (h31 > h21 and h21 > h11 and M31t < maxMach):
+                        ################ Stage 2 ################
+                        # Starts second stage calculations 
+                        # Calculates the remaining temp drop
+                        T0_remaining = dT0_turb - T0s_rev1
+                        psi_turb2 = (2*self.cp_h*1e3*T0_remaining)/(Um**2)
+                        if psi_turb2 > 3.3:
+                            continue # Continues if temp drop too coeff. out of range
+                        else:
+                            # Iterates through another set of phi and lambda values to optimize second stage based on first
+                            for m in range(len(phi_range2)):
+                                for n in range(len(lambda_range2)):
+                                   phi_temp2 = phi_range2[m]
+                                   lambda_temp2 = lambda_range2[n]
+                                   
+                                   gasParamsStg2, measurementsStg2, axialV2 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0_remaining, psi_turb2, phi_temp2, lambda_temp2)
+                                   
+                                   [h12, h22, h32, M32t, Cw3_2] = [measurementsStg2(3), measurementsStg2(4), measurementsStg2(5), gasParamsStg2(8), axialV2(4)]
+                                   # checks that the geometry is satisfied 
+                                   if (h32 > h22 and h22 > h12 and M32t < maxMach):
+                                       # if lowest whirl, adds it to the optimal params
+                                       if Cw3_2 < dCw3:
+                                           desiredParams[0] = psi_temp1
+                                           desiredParams[1] = phi_temp1
+                                           desiredParams[2] = lambda_temp1
+                                           desiredParams[3] = psi_turb2
+                                           desiredParams[4] = phi_temp2
+                                           desiredParams[5] = lambda_temp2
+                                           desiredParams[6] = Cw3_2
+                                           dCw3 = Cw3_2
+                                       else: continue
+                                   else: continue
+                    else: continue
+                                       
+                                
 
-                    gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_temp, lambda_temp)
 
-                    # [h11,h12,h13,M3t]
-                    # Pick up here w checking h31 > h21 > h11, M3t1
-                    # If bad, continue
-                    # Continue on to second stage 
-                    # Check M3t2, h32 > h22 > h12
 
-                    rootVals1, tipVals1 = self.turb_root_tip(gasParamsStg1, measurementsStg1, Um, axialV1)
+                    
+        # [h11,h12,h13,M3t]
+        # Pick up here w checking h31 > h21 > h11, M3t1
+        # If bad, continue
+        # Continue on to second stage 
+        # Check M3t2, h32 > h22 > h12
+
 
         
-        ################ Stage 2 ################
+        '''################ Stage 2 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
         T0_remaining = dT0_turb - T0s_rev1 # K
         T0s_est = T0_remaining
@@ -517,22 +556,24 @@ class TurboMachineryComputationV2:
 
         gasParamsStg3, measurementsStg3, axialV3 = self.turbinestage(alpha1, alpha3, Um, T_013, P_013, T0s_rev3, psi_turb3, phi_vals[2], lambda_vals[2])
 
-        rootVals3, tipVals3 = self.turb_root_tip(gasParamsStg3, measurementsStg3, Um, axialV3)
+        rootVals3, tipVals3 = self.turb_root_tip(gasParamsStg3, measurementsStg3, Um, axialV3)'''
         
+        '''
+
         # Adds the data to Pandas DFs 
-        gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2,gasParamsStg3]),3)
-        measurementsData = np.round(np.array([measurementsStg1,measurementsStg2,measurementsStg3]),3)
-        rootData = np.round(np.array([rootVals1, rootVals2, rootVals3]),3)
-        tipData = np.round(np.array([tipVals1, tipVals2, tipVals3]),3)
+        gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2]),3)
+        measurementsData = np.round(np.array([measurementsStg1,measurementsStg2]),3)
+        rootData = np.round(np.array([rootVals1, rootVals2]),3)
+        tipData = np.round(np.array([tipVals1, tipVals2]),3)
         
-        gasParamDF = pd.DataFrame(gasParamData, index=[1,2,3], columns=['α1','α2','α3','β2','β3','ΔT0s','P02/P01','Cw3','M3t','Φ','ψ','Λ'])
-        measurementsDF = pd.DataFrame(measurementsData, index=[1,2,3], columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3','rm'])
-        rootDF = pd.DataFrame(rootData, index=[1,2,3], columns=['Ur2', 'Ur3', 'alpha2r', 'alpha3r', 'beta2r', 'beta3r', 'Cw1r', 'V2r', 'C2r', 'Cw2r', 'V3r', 'C3r', 'Cw3r', 'phiRoot', 'psiRoot', 'lambdaRoot'])
-        tipDF = pd.DataFrame(tipData, index=[1,2,3], columns=['Ut2', 'Ut3', 'alpha2t', 'alpha3t', 'beta2t', 'beta3t', 'Cw1t', 'V2t', 'C2t', 'Cw2t', 'V3t', 'C3t', 'Cw3t', 'phiTip', 'psiTip', 'lambdaTip'])
-        
+        gasParamDF = pd.DataFrame(gasParamData, index=[1,2], columns=['α1','α2','α3','β2','β3','ΔT0s','P02/P01','Cw3','M3t','Φ','ψ','Λ'])
+        measurementsDF = pd.DataFrame(measurementsData, index=[1,2], columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3','rm'])
+        rootDF = pd.DataFrame(rootData, index=[1,2], columns=['Ur2', 'Ur3', 'alpha2r', 'alpha3r', 'beta2r', 'beta3r', 'Cw1r', 'V2r', 'C2r', 'Cw2r', 'V3r', 'C3r', 'Cw3r', 'phiRoot', 'psiRoot', 'lambdaRoot'])
+        tipDF = pd.DataFrame(tipData, index=[1,2], columns=['Ut2', 'Ut3', 'alpha2t', 'alpha3t', 'beta2t', 'beta3t', 'Cw1t', 'V2t', 'C2t', 'Cw2t', 'V3t', 'C3t', 'Cw3t', 'phiTip', 'psiTip', 'lambdaTip'])
+        '''
         ## START HERE WITH CHECKING VALUES AFTER
-        return gasParamDF, measurementsDF, rootDF, tipDF, stage_est, Um
-        # return gasParamDF, measurementsDF, stage_est, Um
+        return desiredParams
+        
     
 
 
