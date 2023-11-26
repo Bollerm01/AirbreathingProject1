@@ -44,9 +44,9 @@ class TurboMachineryComputationV2:
         self.y_h = 1.333 # Gamma in the hot section
         self.cp_h = 1.148 # Specific heat hot section, kJ/(kg*K)
         # Basic design parameters - constant tip radius assumption
-        self.U_t1 = 380 # Inlet Tip speed, m/s
+        self.U_t1 = 420 # Inlet Tip speed, m/s
         
-        self.C_a = 175 # Inlet axial velocity, m/s
+        self.C_a = 180 # Inlet axial velocity, m/s
 
         # Other parameters
         self.n_m = 0.99 # assumed mechanical efficiency of 99%
@@ -118,11 +118,11 @@ class TurboMachineryComputationV2:
         # Estimated number of stages
         stage_est = np.ceil(self.delt_Ts/T0s_est)
 
-        alpha1 = 0.0 # radians, inlet blade angle
+        alpha1 = 0.4 # radians, inlet blade angle
         
         ################ Stage 1 ################
         # First stage calculation
-        delta_T0 = 30 ## Desired temperature rise per stage for the first stage 
+        delta_T0 = 39.5 ## Desired temperature rise per stage for the first stage 
         delta_C_w = self.cp_c*1e3*delta_T0/(self.lam*self.U_m)
         self.lam = self.workdone(1) ## Update work done factor
         # Whirl velocities
@@ -172,8 +172,8 @@ class TurboMachineryComputationV2:
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
-        delta_T0 = 29 ## Desired temperature rise for the second stage
-        React = 0.65 ## Degree of reaction for the second stage
+        delta_T0 = 47 ## Desired temperature rise for the second stage
+        React = 0.65  ## Degree of reaction for the second stage
         self.lam = self.workdone(2) ## Update work done factor
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
@@ -227,7 +227,7 @@ class TurboMachineryComputationV2:
         sizingtable.loc[len(sizingtable)] = s_data
 
         ################ Stage 3 ################
-        delta_T0 = 29 ## Desired temperature rise for the second stage
+        delta_T0 = 47 ## Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage
         self.lam = self.workdone(3) ## Update work done factor
         # Calculate relative blade angles by solving system of eqs
@@ -296,8 +296,8 @@ class TurboMachineryComputationV2:
             delta_T0 = 100.0
             React = 0.5
             data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
-            while diffusion < self.haller+0.07:
-                delta_T0 -= 0.01
+            while diffusion < self.haller+0.0001:
+                delta_T0 -= 0.001
                 data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
 
             test_p03 = test2_p03
