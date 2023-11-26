@@ -873,19 +873,32 @@ class TurboMachineryComputation:
             M2t = V2t/np.sqrt(self.y_c*self.R*T2)
             # Update tables
             if i == 0:
-                tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r])]),2),columns=['alpha1_t','alpha1_m','alpha1_r','beta1_t','beta1_m','beta1_r','alpha2_t','alpha2_m','alpha2_r','beta2_t','beta2_m','beta2_r'])
-                whirl_table = pd.DataFrame(np.round([np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r])],2),columns=['Cw1_t','Cw1_m','Cw1_r','Cw2_t','Cw2_m','Cw2_r'])
-                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,V1t,V1m,V1r,V2t,V2m,V2r])],2),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r'])
+                tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])]),2),columns=['alpha1_t','alpha1_m','alpha1_r','beta1_t','beta1_m','beta1_r','alpha2_t','alpha2_m','alpha2_r','beta2_t','beta2_m','beta2_r','alpha3_t','alpha3_m','alpha3_r'])
+                whirl_table = pd.DataFrame(np.round([np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0])],2),columns=['Cw1_t','Cw1_m','Cw1_r','Cw2_t','Cw2_m','Cw2_r','Cw3_t','Cw3_m','Cw3_r'])
+                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r,V2t/V1t,V2m/V1m,V2r/V1r])],3),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','C3_t','C3_m','C3_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r','V2/V1_t','V2/V1_m','V2/V1_r'])
             else:
-                data = np.round(np.rad2deg(np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r])),2)
-                data2 = np.round(np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r]),2)
-                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,V1t,V1m,V1r,V2t,V2m,V2r]),2)
+                data = np.round(np.rad2deg(np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])),2)
+                data2 = np.round(np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0]),2)
+                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r,V2t/V1t,V2m/V1m,V2r/V1r]),3)
                 tiproot_table.loc[len(tiproot_table)] = data
                 whirl_table.loc[len(whirl_table)] = data2
                 vel_table.loc[len(vel_table)] = data3           
 
             meantable['M1t'][i] = np.round(M1t,3)
             meantable['M2t'][i] = np.round(M2t,3)
+
+        for i in range(0,len(tiproot_table)-1):
+            tiproot_table['alpha3_t'][i] = tiproot_table['alpha1_t'][i+1]
+            tiproot_table['alpha3_m'][i] = tiproot_table['alpha1_m'][i+1]
+            tiproot_table['alpha3_r'][i] = tiproot_table['alpha1_r'][i+1]
+
+        for i in range(0,len(tiproot_table)):
+            whirl_table['Cw3_t'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_t'][i]))*self.C_a,2)
+            whirl_table['Cw3_m'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_m'][i]))*self.C_a,2)
+            whirl_table['Cw3_r'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_r'][i]))*self.C_a,2)
+            vel_table['C3_t'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_t'][i])),3)
+            vel_table['C3_m'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_m'][i])),3)
+            vel_table['C3_r'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_r'][i])),3)
 
         return tiproot_table, whirl_table, vel_table, meantable
     
