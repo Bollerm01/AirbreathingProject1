@@ -12,7 +12,7 @@ University of Cincinnati FS23
 '''
 
 # Begin the code
-class TurboMachineryComputation:
+class TurboMachineryComputationV2:
 
     def __init__(self):
         self.BPR = 6.0 # Bypass ratio
@@ -411,125 +411,64 @@ class TurboMachineryComputation:
 
 
     def fullturbine(self):
-        
-        ##### Values to Toggle ####
+        '''##### Values to Toggle ####
         Um = 369 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.2, 3.3, 3.3] #stage max temp drop coeff. values
+        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
         phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
-        lambda_vals = [0.41, 0.91, 0.5] #desired deg. of reaction values
+        lambda_vals = [0.41, 0.91, 0.5] #desired deg. of reaction values'''
 
+        # Specifies the ranges for iteration
+        psi_range = np.arange(2.0, 3.3, 0.01)
+        phi_range = np.arange(0.78, 1.2, 0.01)
+        lambda_range = np.arange(0.4,0.95,0.01)
+        
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
         N = self.N
         lamdaN = 0.05 # assumed standard value
-        
+        Um = 360 # m/s
+        maxMach = 1.15 # sets the max Mach at the tip
+
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
         dT0_turb = (self.cp_c*(self.T_03-self.T_02))/(self.cp_h*self.n_m)
-        
+        desired_dT0s = dT0_turb/2 # splits the temp drop over the 2 stgs based on trial/error
+
         ################ Stage 1 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
         T0s_est = 1000 # K
-        
-        # Calculates the temp drop coeff. for the first stage
-        psi_turb1 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
-        # iteration to find the stage drop below the loading coefficient
-        T0s_rev1 = T0s_est
-        if np.round(psi_turb1, 3) > psi_max[0]:
-            while np.round(psi_turb1, 3) > psi_max[0]:
-                T0s_rev1 -= 0.01
-                psi_turb1 = (2*self.cp_h*1e3*T0s_rev1)/(Um**2)
-        
-        stage_est = (dT0_turb/T0s_rev1)
-
-        
         # Assumptions for first stage 
         alpha1 = 0.0
         alpha3 = 0.0
         P_011 = self.P_04
         T_011 = self.T_04
-
-        gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_vals[0], lambda_vals[0])
-
-        rootVals1, tipVals1 = self.turb_root_tip(gasParamsStg1, measurementsStg1, Um, axialV1)
-
-        '''# Calculates the B3 and deg. of reaction
-        beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
-        Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2 
-        # iterates to find a suitable degree of reaction
-        if np.round(Lambda, 3) > 0.420:
-            while np.round(Lambda, 3) > 0.420:
-                alpha3 += np.deg2rad(5)
-                beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
-                Lambda = (2*self.phi*np.tan(beta3)- (psi_turb/2))/2
         
-        # Calculates B2 and a2
-        beta2 = np.arctan((1/(2*self.phi))*(psi_turb/2 - 2*Lambda))
-        alpha2 = np.arctan(np.tan(beta2) + (1/self.phi))
+        for i in range(len(psi_range)):
+            for j in range(len(phi_range)):
+                for k in range(len(lambda_range)):
+                    psi_temp = psi_range[i]
+                    phi_temp = phi_range[j]
+                    lambda_temp = lambda_range[k]
 
-        # Calculates Ca2 and C2
-        Ca2 = Um*self.phi
-        C2 = Ca2 / np.cos(alpha2)
+                    # Calculates the temp drop coeff. for the first stage
+                    psi_turb1 = (2*self.cp_h*1e3*T0s_est)/(Um**2)
+                    # iteration to find the stage drop below the loading coefficient
+                    T0s_rev1 = T0s_est
+                    if np.round(psi_turb1, 3) > psi_temp:
+                        while np.round(psi_turb1, 3) > psi_temp:
+                            T0s_rev1 -= 0.01
+                            psi_turb1 = (2*self.cp_h*1e3*T0s_rev1)/(Um**2)           
+                    
 
-        # Calculates the isentropic T2', T2 and p2
-        T2 = self.T_04 - (C2**2/(2*self.cp_h*1e3))
-        T2prime = T2- lamdaN*(C2**2/(2*self.cp_h*1e3))
-        stagStaticRat = (self.T_04/T2prime)**(self.y_h/(self.y_h-1))
-        CritPrat = 1.853
-        if stagStaticRat > CritPrat:
-            print('ask the child if he or she is choking')
+                    gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_temp, lambda_temp)
 
-        P2 = self.P_04/stagStaticRat
+                    # [h11,h12,h13,M3t]
+                    # Pick up here w checking h31 > h21 > h11, M3t1
+                    # If bad, continue
+                    # Continue on to second stage 
+                    # Check M3t2, h32 > h22 > h12
 
-        # Calculate the rho2 and A2
-        rho2 = (P2*100)/(0.287*T2)      
-        A2 = self.mdot/(rho2*Ca2)
-        
-        # Calculates the Ca1, using Ca2 = Ca3 and C1 = C3
-        Ca3 = Ca2
-        C3 = Ca3/np.cos(alpha3)
-        C1 = C3
-        Ca1 = C1 #since alpha1 = 0.0
+                    rootVals1, tipVals1 = self.turb_root_tip(gasParamsStg1, measurementsStg1, Um, axialV1)
 
-        # Calculates rho1 and A1
-        T1 = self.T_04 - (C1**2/(2*self.cp_h*1e3))
-        P1 = self.P_04*(T1/self.T_04)**(self.y_h/(self.y_h-1))
-        rho1 = (P1*100)/(0.287*T1)
-        A1 = self.mdot/(rho1*Ca1)
-
-        # Calculates the outlet (station 3) conditions
-        T_03 = self.T_04 - T0s_rev
-        T3 = T_03 - (C3**2)/(2*self.cp_h*1e3)
-
-        # Calculates the P03 from the isentropic eff. (using P04 = P01 and T04 = T01) and P3 from isentropic
-        P_03 = self.P_04*(1 - (T0s_rev/(self.n_inf_t)))**(self.y_h/(self.y_h-1))
-        P3 = P_03*(T3/T_03)**(self.y_h/(self.y_h-1))
-
-        # Calculates the rho3, A3
-        rho3 = (P3*100)/(0.287*T3)
-        A3 = self.mdot/(rho3*Ca3)
-
-        # Rework to put at beginning for sizing 
-        # Size at inlet and outlet of turbine 
-        # Calculate the mean radius, use for calcs to get Um
-        # Calculate rm
-        rm = Um/(2*np.pi*N)
-
-        # Calculates the h1-h3
-        h1 = (N/Um)*A1
-        h2 = (N/Um)*A2
-        h3 = (N/Um)*A3
-
-        # Calculates the rt/rr
-        rtRat1 = (rm + (h1/2))/(rm - (h1/2))
-        rtRat2 = (rm + (h2/2))/(rm - (h2/2))
-        rtRat3 = (rm + (h3/2))/(rm - (h3/2))
-
-        # # Calculates the Yn (T02 = T04)
-        # P_02 = P2 / ((T2/self.T_04)**(self.y_h/(self.y_h - 1))) 
-        # print(self.P_04)
-        # print(P_02)
-        # print(P2)
-        # Yn = (self.P_04 - P_02)/(P_02 - P2) '''
         
         ################ Stage 2 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
@@ -873,32 +812,19 @@ class TurboMachineryComputation:
             M2t = V2t/np.sqrt(self.y_c*self.R*T2)
             # Update tables
             if i == 0:
-                tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])]),2),columns=['alpha1_t','alpha1_m','alpha1_r','beta1_t','beta1_m','beta1_r','alpha2_t','alpha2_m','alpha2_r','beta2_t','beta2_m','beta2_r','alpha3_t','alpha3_m','alpha3_r'])
-                whirl_table = pd.DataFrame(np.round([np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0])],2),columns=['Cw1_t','Cw1_m','Cw1_r','Cw2_t','Cw2_m','Cw2_r','Cw3_t','Cw3_m','Cw3_r'])
-                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r,V2t/V1t,V2m/V1m,V2r/V1r])],3),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','C3_t','C3_m','C3_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r','V2/V1_t','V2/V1_m','V2/V1_r'])
+                tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r])]),2),columns=['alpha1_t','alpha1_m','alpha1_r','beta1_t','beta1_m','beta1_r','alpha2_t','alpha2_m','alpha2_r','beta2_t','beta2_m','beta2_r'])
+                whirl_table = pd.DataFrame(np.round([np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r])],2),columns=['Cw1_t','Cw1_m','Cw1_r','Cw2_t','Cw2_m','Cw2_r'])
+                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,V1t,V1m,V1r,V2t,V2m,V2r])],2),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r'])
             else:
-                data = np.round(np.rad2deg(np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])),2)
-                data2 = np.round(np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0]),2)
-                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r,V2t/V1t,V2m/V1m,V2r/V1r]),3)
+                data = np.round(np.rad2deg(np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r])),2)
+                data2 = np.round(np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r]),2)
+                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,V1t,V1m,V1r,V2t,V2m,V2r]),2)
                 tiproot_table.loc[len(tiproot_table)] = data
                 whirl_table.loc[len(whirl_table)] = data2
                 vel_table.loc[len(vel_table)] = data3           
 
             meantable['M1t'][i] = np.round(M1t,3)
             meantable['M2t'][i] = np.round(M2t,3)
-
-        for i in range(0,len(tiproot_table)-1):
-            tiproot_table['alpha3_t'][i] = tiproot_table['alpha1_t'][i+1]
-            tiproot_table['alpha3_m'][i] = tiproot_table['alpha1_m'][i+1]
-            tiproot_table['alpha3_r'][i] = tiproot_table['alpha1_r'][i+1]
-
-        for i in range(0,len(tiproot_table)):
-            whirl_table['Cw3_t'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_t'][i]))*self.C_a,2)
-            whirl_table['Cw3_m'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_m'][i]))*self.C_a,2)
-            whirl_table['Cw3_r'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_r'][i]))*self.C_a,2)
-            vel_table['C3_t'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_t'][i])),3)
-            vel_table['C3_m'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_m'][i])),3)
-            vel_table['C3_r'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_r'][i])),3)
 
         return tiproot_table, whirl_table, vel_table, meantable
     
