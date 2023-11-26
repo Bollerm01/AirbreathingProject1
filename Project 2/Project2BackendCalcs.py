@@ -44,9 +44,9 @@ class TurboMachineryComputation:
         self.y_h = 1.333 # Gamma in the hot section
         self.cp_h = 1.148 # Specific heat hot section, kJ/(kg*K)
         # Basic design parameters - constant tip radius assumption
-        self.U_t1 = 350 # Inlet Tip speed, m/s
+        self.U_t1 = 380 # Inlet Tip speed, m/s
         
-        self.C_a = 150 # Inlet axial velocity, m/s
+        self.C_a = 175 # Inlet axial velocity, m/s
 
         # Other parameters
         self.n_m = 0.99 # assumed mechanical efficiency of 99%
@@ -296,7 +296,7 @@ class TurboMachineryComputation:
             delta_T0 = 100.0
             React = 0.5
             data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
-            while diffusion < self.haller+0.01:
+            while diffusion < self.haller+0.07:
                 delta_T0 -= 0.01
                 data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
 
@@ -396,16 +396,17 @@ class TurboMachineryComputation:
             s_diffusion = np.cos(alpha2)/np.cos(alpha3)
             meantable['C3/C2'][i] = np.round(s_diffusion,3)
 
-        tiproot_table, whirl_table, vel_table, meantable = self.comp_root_tip(meantable=meantable,sizingtable=sizingtable,rm=self.rm)        
+        tiproot_table, whirl_table, vel_table, meantable, dif_table = self.comp_root_tip(meantable=meantable,sizingtable=sizingtable,rm=self.rm)        
 
         sizingtable.index = np.arange(1, len(sizingtable)+1)
         meantable.index = np.arange(1, len(meantable)+1)
         tiproot_table.index = np.arange(1, len(tiproot_table)+1)
         whirl_table.index = np.arange(1, len(whirl_table)+1)
         vel_table.index = np.arange(1, len(vel_table)+1)
+        dif_table.index = np.arange(1, len(dif_table)+1)
         # meantable.index.name = 'Stage'
         # meantable.reset_index().to_string(index=False)
-        return meantable, sizingtable, tiproot_table, whirl_table, vel_table
+        return meantable, sizingtable, tiproot_table, whirl_table, vel_table, dif_table
        
 
 
@@ -875,14 +876,17 @@ class TurboMachineryComputation:
             if i == 0:
                 tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])]),2),columns=['alpha1_t','alpha1_m','alpha1_r','beta1_t','beta1_m','beta1_r','alpha2_t','alpha2_m','alpha2_r','beta2_t','beta2_m','beta2_r','alpha3_t','alpha3_m','alpha3_r'])
                 whirl_table = pd.DataFrame(np.round([np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0])],2),columns=['Cw1_t','Cw1_m','Cw1_r','Cw2_t','Cw2_m','Cw2_r','Cw3_t','Cw3_m','Cw3_r'])
-                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r,V2t/V1t,V2m/V1m,V2r/V1r])],3),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','C3_t','C3_m','C3_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r','V2/V1_t','V2/V1_m','V2/V1_r'])
+                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r])],3),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','C3_t','C3_m','C3_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r'])
+                dif_table = pd.DataFrame(np.round([np.array([V2t/V1t,V2m/V1m,V2r/V1r,0.0,0.0,0.0])],3),columns=['V2/V1_t','V2/V1_m','V2/V1_r','C3/C2_t','C3/C2_m','C3/C2_r'])
             else:
                 data = np.round(np.rad2deg(np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])),2)
                 data2 = np.round(np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0]),2)
-                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r,V2t/V1t,V2m/V1m,V2r/V1r]),3)
+                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r]),3)
+                data4 = np.round(np.array([V2t/V1t,V2m/V1m,V2r/V1r,0.0,0.0,0.0]),3)
                 tiproot_table.loc[len(tiproot_table)] = data
                 whirl_table.loc[len(whirl_table)] = data2
-                vel_table.loc[len(vel_table)] = data3           
+                vel_table.loc[len(vel_table)] = data3
+                dif_table.loc[len(dif_table)] = data4
 
             meantable['M1t'][i] = np.round(M1t,3)
             meantable['M2t'][i] = np.round(M2t,3)
@@ -899,8 +903,12 @@ class TurboMachineryComputation:
             vel_table['C3_t'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_t'][i])),3)
             vel_table['C3_m'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_m'][i])),3)
             vel_table['C3_r'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_r'][i])),3)
+            dif_table['C3/C2_t'][i] = np.round(vel_table['C3_t'][i]/vel_table['C2_t'][i],3)
+            dif_table['C3/C2_m'][i] = np.round(vel_table['C3_m'][i]/vel_table['C2_m'][i],3)
+            dif_table['C3/C2_r'][i] = np.round(vel_table['C3_r'][i]/vel_table['C2_r'][i],3)
 
-        return tiproot_table, whirl_table, vel_table, meantable
+
+        return tiproot_table, whirl_table, vel_table, meantable, dif_table
     
     def workdone(self,stage):
         # Loading factor calculation curve fit
