@@ -418,7 +418,7 @@ class TurboMachineryComputation:
         
         ##### Values to Toggle ####
         Um = 370 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.3, 3.1636440560951895, 3.3] #stage max temp drop coeff. values
+        psi_max = [3.3, 3.1987248278099565, 3.3] #stage max temp drop coeff. values
         phi_vals = [1.08, 0.78, 0.78] #stage flow coeff. values
         lambda_vals = [0.4, 0.89999999, 0.5] #desired deg. of reaction values
 
@@ -712,7 +712,7 @@ class TurboMachineryComputation:
 
         # Calculates rho1 and A1
         T1 = T_01 - (C1**2/(2*self.cp_h*1e3))
-        P1 = P_01*(T1/self.T_04)**(self.y_h/(self.y_h-1))
+        P1 = P_01*(T1/T_01)**(self.y_h/(self.y_h-1))
         rho1 = (P1*100)/(0.287*T1)
         A1 = self.mdoth/(rho1*Ca1)
 

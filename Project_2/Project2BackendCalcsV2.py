@@ -424,13 +424,13 @@ class TurboMachineryComputationV2:
         
         dCw3 = 1000.0 # Sets a max for whirl to compare to 
         dh = 1000.0 #sets a max height
-        desiredParams = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0, 0.0]) # [psi1, phi1, lambda1, psi2, phi2, lambda2, Cw3, dh]
+        desiredParams = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0]) # [psi1, phi1, lambda1, psi2, phi2, lambda2, Cw3]
         
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
         N = self.N
         lamdaN = 0.05 # assumed standard value
-        Um = 370 # m/s
+        Um = 375 # m/s
         maxMach = 1.2 # sets the max Mach at the tip
 
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)
@@ -484,23 +484,18 @@ class TurboMachineryComputationV2:
                                 
                                 [h12, h22, h32, M32t, Cw3_2] = [measurementsStg2[3], measurementsStg2[4], measurementsStg2[5], gasParamsStg2[8], axialV2[4]]
                                 # checks that the geometry is satisfied 
-                                if (h32 > h22 and (np.abs(h22 - h12) <=0.003) and M32t < maxMach):
+                                if (h12 > h31 and np.round(h22,3) > np.round(h12,3) and M32t < maxMach):
                                     # if lowest whirl, adds it to the optimal params
-                                    dhTemp = np.abs(h22-h12)
                                     if Cw3_2 < dCw3:
-                                        if dhTemp < dh:
-                                            desiredParams[0] = psi_temp1
-                                            desiredParams[1] = phi_temp1
-                                            desiredParams[2] = lambda_temp1
-                                            desiredParams[3] = psi_turb2
-                                            desiredParams[4] = phi_temp2
-                                            desiredParams[5] = lambda_temp2
-                                            desiredParams[6] = Cw3_2
-                                            desiredParams[7] = dhTemp
-                                            dCw3 = Cw3_2
-                                            dh = dhTemp
-                                            print('params found: {}'.format(desiredParams))
-                                        else: continue
+                                        desiredParams[0] = psi_temp1
+                                        desiredParams[1] = phi_temp1
+                                        desiredParams[2] = lambda_temp1
+                                        desiredParams[3] = psi_turb2
+                                        desiredParams[4] = phi_temp2
+                                        desiredParams[5] = lambda_temp2
+                                        desiredParams[6] = Cw3_2
+                                        dCw3 = Cw3_2
+                                        print('params found: {}'.format(desiredParams))
                                     else: continue
                                 else: continue
                 else: continue
@@ -663,7 +658,7 @@ class TurboMachineryComputationV2:
 
         # Calculates rho1 and A1
         T1 = T_01 - (C1**2/(2*self.cp_h*1e3))
-        P1 = P_01*(T1/self.T_04)**(self.y_h/(self.y_h-1))
+        P1 = P_01*(T1/T_01)**(self.y_h/(self.y_h-1))
         rho1 = (P1*100)/(0.287*T1)
         A1 = self.mdoth/(rho1*Ca1)
 
