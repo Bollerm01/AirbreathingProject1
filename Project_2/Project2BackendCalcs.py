@@ -94,7 +94,9 @@ class TurboMachineryComputation:
         A3 = self.mdot/(self.BPR+1)/(self.rho3*self.C_a)
         h3 = A3/(2*np.pi*self.rm)
         self.rt_3 = self.rm + (h3/2)
-        self.rr_3 = self.rm - (h3/2)        
+        self.rr_3 = self.rm - (h3/2)  
+
+        # Calculates the inlet a      
         
         return 
     
@@ -451,7 +453,7 @@ class TurboMachineryComputation:
 
         gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_turb1, phi_vals[0], lambda_vals[0])
 
-        rootVals1, tipVals1 = self.turb_root_tip(gasParamsStg1, measurementsStg1, Um, axialV1)
+        rootVals1, tipVals1, rtMeasure1 = self.turb_root_tip(gasParamsStg1, measurementsStg1, Um, axialV1)
 
         '''# Calculates the B3 and deg. of reaction
         beta3 = np.arctan(np.tan(alpha3) + (1/self.phi))
@@ -554,7 +556,7 @@ class TurboMachineryComputation:
 
         gasParamsStg2, measurementsStg2, axialV2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0s_rev2, psi_turb2, phi_vals[1], lambda_vals[1])
 
-        rootVals2, tipVals2 = self.turb_root_tip(gasParamsStg2, measurementsStg2, Um, axialV2)
+        rootVals2, tipVals2, rtMeasure2 = self.turb_root_tip(gasParamsStg2, measurementsStg2, Um, axialV2)
 
         ################ Stage 3 ################
         # Uses stage estimation based on constant drop (initial guess) over the stages
@@ -579,13 +581,14 @@ class TurboMachineryComputation:
 
         gasParamsStg3, measurementsStg3, axialV3 = self.turbinestage(alpha1, alpha3, Um, T_013, P_013, T0s_rev3, psi_turb3, phi_vals[2], lambda_vals[2])
 
-        rootVals3, tipVals3 = self.turb_root_tip(gasParamsStg3, measurementsStg3, Um, axialV3)
+        rootVals3, tipVals3, rtMeasure3 = self.turb_root_tip(gasParamsStg3, measurementsStg3, Um, axialV3)
         
         # Adds the data to Pandas DFs 
         gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2,gasParamsStg3]),3)
         measurementsData = np.round(np.array([measurementsStg1,measurementsStg2,measurementsStg3]),3)
         rootData = np.round(np.array([rootVals1, rootVals2, rootVals3]),3)
         tipData = np.round(np.array([tipVals1, tipVals2, tipVals3]),3)
+        rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),3) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
         
         gasParamDF = pd.DataFrame(gasParamData, index=[1,2,3], columns=['α1','α2','α3','β2','β3','ΔT0s','P02/P01','Cw3','M3t','Φ','ψ','Λ'])
         measurementsDF = pd.DataFrame(measurementsData, index=[1,2,3], columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3','rm'])
@@ -593,7 +596,7 @@ class TurboMachineryComputation:
         tipDF = pd.DataFrame(tipData, index=[1,2,3], columns=['Ut2', 'Ut3', 'alpha2t', 'alpha3t', 'beta2t', 'beta3t', 'Cw1t', 'V2t', 'C2t', 'Cw2t', 'V3t', 'C3t', 'Cw3t', 'phiTip', 'psiTip', 'lambdaTip'])
         
         ## START HERE WITH CHECKING VALUES AFTER
-        return gasParamDF, measurementsDF, rootDF, tipDF, stage_est, Um
+        return gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, stage_est, Um
         # return gasParamDF, measurementsDF, stage_est, Um
     
 
@@ -823,8 +826,9 @@ class TurboMachineryComputation:
         # Organizes return
         rootValues = np.array([Ur2, Ur3, np.rad2deg(alpha2r), np.rad2deg(alpha3r), np.rad2deg(beta2r), np.rad2deg(beta3r), Cw1r, V2r, C2r, Cw2r, V3r, C3r, Cw3r, phiRoot, psiRoot, lambdaRoot])
         tipValues = np.array([Ut2, Ut3, np.rad2deg(alpha2t), np.rad2deg(alpha3t), np.rad2deg(beta2t), np.rad2deg(beta3t), Cw1t, V2t, C2t, Cw2t, V3t, C3t, Cw3t, phiTip, psiTip, lambdaTip])
+        rtMeasurements = np.array([rr1,rt1, rm, rr3, rt3])
 
-        return rootValues, tipValues
+        return rootValues, tipValues, rtMeasurements
     
     def comp_root_tip(self, meantable,sizingtable,rm):
         for i in range(0,len(meantable)):
@@ -916,8 +920,8 @@ class TurboMachineryComputation:
         return a + b*np.exp(c*stage)
 
 
-# backend = TurboMachineryComputation()
-# gasParams, measure = backend.fullturbine()
+backend = TurboMachineryComputation()
+gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, stage_est, Um = backend.fullturbine()
 # print('\nTurbine $\Delta$ T: {}'.format(dT0_turb))
 # print('\nStage $\Delta$ T: {} K'.format(T0s))
 # print('\nTip Mach Numbers: {}'.format(M))
