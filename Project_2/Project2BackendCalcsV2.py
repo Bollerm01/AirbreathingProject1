@@ -415,11 +415,11 @@ class TurboMachineryComputationV2:
         
         # Specifies the ranges for iteration
         # psi_range1 = np.arange(2.0, 3.3, 0.05)
-        psi_1 = 3.3
-        phi_range1 = np.arange(0.78, 1.2, 0.05)
+        psi_1 = 2.75
+        phi_range1 = np.arange(0.85, 1.2, 0.05)
         lambda_range1 = np.arange(0.4,0.95,0.05)
 
-        phi_range2 = np.arange(0.78, 1.2, 0.05)
+        phi_range2 = np.arange(0.85, 1.2, 0.05)
         lambda_range2 = np.arange(0.4,0.95,0.05)
         
         dCw3 = 1000.0 # Sets a max for whirl to compare to 
@@ -430,7 +430,7 @@ class TurboMachineryComputationV2:
         # Sets the rotational speed and mean blade speed
         N = self.N
         lamdaN = 0.05 # assumed standard value
-        Um = 375 # m/s
+        Um = 450 # m/s
         maxMach = 1.2 # sets the max Mach at the tip
 
         # Calculates the total temperature drop based on a work balance from the compressor (using assummed mech. eff.)

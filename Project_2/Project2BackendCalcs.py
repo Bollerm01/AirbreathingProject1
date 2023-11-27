@@ -416,10 +416,10 @@ class TurboMachineryComputation:
     def fullturbine(self):
         
         ##### Values to Toggle ####
-        Um = 369 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.3, 3.3, 3.3] #stage max temp drop coeff. values
+        Um = 340 #assumed mean blade speed based on experience, m/s
+        psi_max = [3.1, 3.2, 3.3] #stage max temp drop coeff. values
         phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
-        lambda_vals = [0.41, 0.91, 0.5] #desired deg. of reaction values
+        lambda_vals = [0.6, 0.5, 0.5] #desired deg. of reaction values
 
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
@@ -711,7 +711,7 @@ class TurboMachineryComputation:
 
         # Calculates rho1 and A1
         T1 = T_01 - (C1**2/(2*self.cp_h*1e3))
-        P1 = P_01*(T1/self.T_04)**(self.y_h/(self.y_h-1))
+        P1 = P_01*(T1/T_01)**(self.y_h/(self.y_h-1))
         rho1 = (P1*100)/(0.287*T1)
         A1 = self.mdoth/(rho1*Ca1)
 
