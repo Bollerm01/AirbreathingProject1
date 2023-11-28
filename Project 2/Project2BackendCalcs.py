@@ -65,7 +65,8 @@ class TurboMachineryComputation:
 
         # Tip radius and rotation rate
         self.rt = np.sqrt((self.mdot/(self.BPR+1))/(np.pi*self.rho2*self.C_a*(1-self.rr_rt_o**2)))
-        self.N = self.U_t1/(2*np.pi*self.rt)
+        # self.N = self.U_t1/(2*np.pi*self.rt)
+        self.N = 253.63 
 
         # Root and mean radius at the inlet
         self.rr = self.rt*self.rr_rt_o
@@ -416,10 +417,10 @@ class TurboMachineryComputation:
     def fullturbine(self):
         
         ##### Values to Toggle ####
-        Um = 340 #assumed mean blade speed based on experience, m/s
-        psi_max = [3.1, 3.2, 3.3] #stage max temp drop coeff. values
-        phi_vals = [0.78, 0.78, 0.78] #stage flow coeff. values
-        lambda_vals = [0.6, 0.5, 0.5] #desired deg. of reaction values
+        Um = 370 #assumed mean blade speed based on experience, m/s
+        psi_max = [3.3, 3.1987248278099565, 3.3] #stage max temp drop coeff. values
+        phi_vals = [1.08, 0.78, 0.78] #stage flow coeff. values
+        lambda_vals = [0.4, 0.89999999, 0.5] #desired deg. of reaction values
 
         ################ Preliminary Sizing ################
         # Sets the rotational speed and mean blade speed
@@ -920,8 +921,8 @@ class TurboMachineryComputation:
         return a + b*np.exp(c*stage)
 
 
-backend = TurboMachineryComputation()
-gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, stage_est, Um = backend.fullturbine()
+# backend = TurboMachineryComputation()
+# gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, stage_est, Um = backend.fullturbine()
 # print('\nTurbine $\Delta$ T: {}'.format(dT0_turb))
 # print('\nStage $\Delta$ T: {} K'.format(T0s))
 # print('\nTip Mach Numbers: {}'.format(M))
