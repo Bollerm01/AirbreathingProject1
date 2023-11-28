@@ -118,11 +118,11 @@ class TurboMachineryComputationV2:
         # Estimated number of stages
         stage_est = np.ceil(self.delt_Ts/T0s_est)
 
-        alpha1 = 0.4 # radians, inlet blade angle
+        alpha1 = 0.305 # radians, inlet blade angle
         
         ################ Stage 1 ################
         # First stage calculation
-        delta_T0 = 39.5 ## Desired temperature rise per stage for the first stage 
+        delta_T0 = 30.0 ## Desired temperature rise per stage for the first stage 
         delta_C_w = self.cp_c*1e3*delta_T0/(self.lam*self.U_m)
         self.lam = self.workdone(1) ## Update work done factor
         # Whirl velocities
@@ -172,8 +172,8 @@ class TurboMachineryComputationV2:
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
-        delta_T0 = 47 ## Desired temperature rise for the second stage
-        React = 0.65  ## Degree of reaction for the second stage
+        delta_T0 = 41.0 ## Desired temperature rise for the second stage
+        React = 0.68  ## Degree of reaction for the second stage
         self.lam = self.workdone(2) ## Update work done factor
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
@@ -227,8 +227,8 @@ class TurboMachineryComputationV2:
         sizingtable.loc[len(sizingtable)] = s_data
 
         ################ Stage 3 ################
-        delta_T0 = 47 ## Desired temperature rise for the second stage
-        React = 0.5 ## Degree of reaction for the second stage
+        delta_T0 = 43 ## Desired temperature rise for the second stage
+        React = 0.67 ## Degree of reaction for the second stage
         self.lam = self.workdone(3) ## Update work done factor
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
@@ -294,11 +294,22 @@ class TurboMachineryComputationV2:
             ns += 1
 
             delta_T0 = 100.0
-            React = 0.5
+            React = 0.62
             data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
-            while diffusion < self.haller+0.0001:
-                delta_T0 -= 0.001
-                data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            if ns == 5:
+                React = 0.645
+                while diffusion < self.haller+0.008:
+                    delta_T0 -= 0.001
+                    data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            elif ns == 6:
+                React = 0.625
+                while diffusion < self.haller+0.01:
+                    delta_T0 -= 0.001
+                    data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
+            else:
+                while diffusion < self.haller+0.01:
+                    delta_T0 -= 0.001
+                    data, s_data, test2_p03, test2_T02, diffusion = self.compressorstage(delta_T0, React, test_p03, test_T02)
 
             test_p03 = test2_p03
             test_T02 = test2_T02
@@ -318,6 +329,7 @@ class TurboMachineryComputationV2:
         p01 = test_p03
         T01 = test_T02
 
+        React = 0.65
         ################ Last Stage ################
         delta_T0 = ((15.0*self.P_02/p01)**((self.y_c-1)/self.y_c)-1)*T01/self.n_inf_c # Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage   
