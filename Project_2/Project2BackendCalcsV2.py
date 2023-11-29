@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 '''
 AEEM4063 Project 2 Backend Calculations
 
@@ -884,6 +886,60 @@ class TurboMachineryComputationV2:
         # Loading factor calculation curve fit
         a=0.847936849639078; b=0.15697659830655492; c=-0.2412700053204237
         return a + b*np.exp(c*stage)
+    
+    def comp_plotter(self,tiproot_table,stage_array,compressor=True):
+        alpha_1 = np.zeros([3,len(stage_array)])
+        alpha_2 = np.zeros([3,len(stage_array)])
+        beta_1 = np.zeros([3,len(stage_array)])
+        beta_2 = np.zeros([3,len(stage_array)])
+        def func(x,a,b,c):
+            return a*x**2 + b*x + c 
+
+        for i in range(len(stage_array)):
+            alpha_1[0,i] = tiproot_table['alpha1_r'][stage_array[i]]
+            alpha_1[1,i] = tiproot_table['alpha1_m'][stage_array[i]]
+            alpha_1[2,i] = tiproot_table['alpha1_t'][stage_array[i]]
+
+            alpha_2[0,i] = tiproot_table['alpha2_r'][stage_array[i]]
+            alpha_2[1,i] = tiproot_table['alpha2_m'][stage_array[i]]
+            alpha_2[2,i] = tiproot_table['alpha2_t'][stage_array[i]]
+
+            beta_1[0,i] = tiproot_table['beta1_r'][stage_array[i]]
+            beta_1[1,i] = tiproot_table['beta1_m'][stage_array[i]]
+            beta_1[2,i] = tiproot_table['beta1_t'][stage_array[i]]
+
+            beta_2[0,i] = tiproot_table['beta2_r'][stage_array[i]]
+            beta_2[1,i] = tiproot_table['beta2_m'][stage_array[i]]
+            beta_2[2,i] = tiproot_table['beta2_t'][stage_array[i]]
+
+            fit_a1, opt = curve_fit(func,np.array([0,1,2]),alpha_1[:,i])
+            fit_a2, opt = curve_fit(func,np.array([0,1,2]),alpha_2[:,i])
+            fit_b1, opt = curve_fit(func,np.array([0,1,2]),beta_1[:,i])
+            fit_b2, opt = curve_fit(func,np.array([0,1,2]),beta_2[:,i])
+
+            # print(fit_a1)
+
+            plt.figure(i)
+            if compressor:
+                plt.title('Compressor Stage '+str(int(i)))
+            else:
+                plt.title('Turbine Stage '+str(int(i)))
+            # plt.hold('on')
+            # plt.plot(alpha_1[:,i],'b')
+            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
+            # plt.plot(alpha_2[:,i],'g')
+            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
+            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
+            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
+            ys = plt.gca().get_ylim()
+            plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
+            plt.gca().set_ylim(ys)
+            plt.xticks([0, 1, 2],['Root','Mean','Tip'])
+            plt.legend(['$\\alpha_1$','$\\alpha_2$','$\\beta_1$','$\\beta_2$'],bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+            
+
+
+
 
 
 backend2 = TurboMachineryComputationV2()
