@@ -894,7 +894,8 @@ class TurboMachineryComputationV2:
         a=0.847936849639078; b=0.15697659830655492; c=-0.2412700053204237
         return a + b*np.exp(c*stage)
     
-    def comp_plotter(self,tiproot_table,stage_array,compressor=True):
+    def comp_plotter(self,tiproot_table,stage_array,compressor=True,nplotsbefore=0):
+        nplotsbefore = int(nplotsbefore)
         alpha_1 = np.zeros([3,len(stage_array)])
         alpha_2 = np.zeros([3,len(stage_array)])
         beta_1 = np.zeros([3,len(stage_array)])
@@ -919,23 +920,41 @@ class TurboMachineryComputationV2:
             beta_2[1,i] = tiproot_table['beta2_m'][stage_array[i]]
             beta_2[2,i] = tiproot_table['beta2_t'][stage_array[i]]
 
-            fit_a1, opt = curve_fit(func,np.array([0,1,2]),alpha_1[:,i])
-            fit_a2, opt = curve_fit(func,np.array([0,1,2]),alpha_2[:,i])
-            fit_b1, opt = curve_fit(func,np.array([0,1,2]),beta_1[:,i])
-            fit_b2, opt = curve_fit(func,np.array([0,1,2]),beta_2[:,i])
+            a1check = a2check = b1check = b2check = 0
+
+            if np.round(alpha_1[0,i],3) != 0.0 or np.round(alpha_1[1,i],3) != 0.0 or np.round(alpha_1[2,i],3) != 0.0:
+                fit_a1, opt = curve_fit(func,np.array([0,1,2]),alpha_1[:,i])
+            else:
+                a1check = 2
+            if np.round(alpha_2[0,i],3) != 0.0 and np.round(alpha_2[1,i],3) != 0.0 and np.round(alpha_2[2,i],3) != 0.0:
+                fit_a2, opt = curve_fit(func,np.array([0,1,2]),alpha_2[:,i])
+            else:
+                a2check = 2
+            if np.round(beta_1[0,i],3) != 0.0 and np.round(beta_1[1,i],3) != 0.0 and np.round(beta_1[2,i],3) != 0.0:
+                fit_b1, opt = curve_fit(func,np.array([0,1,2]),beta_1[:,i])
+            else:
+                b1check = 2
+            if np.round(beta_2[0,i],3) != 0.0 and np.round(beta_2[1,i],3) != 0.0 and np.round(beta_2[2,i],3) != 0.0:
+                fit_b2, opt = curve_fit(func,np.array([0,1,2]),beta_2[:,i])
+            else:
+                b2check = 2
 
             # print(fit_a1)
-
-            plt.figure(i)
+            
+            plt.figure(i+nplotsbefore)
             if compressor:
                 plt.title('Compressor Stage '+str(int(stage_array[i])))
                 # plt.hold('on')
                 # plt.plot(alpha_1[:,i],'b')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
+                if a1check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
                 # plt.plot(alpha_2[:,i],'g')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
+                if a2check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
+                if b1check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
+                if b2check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
                 ys = plt.gca().get_ylim()
                 plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
                 plt.gca().set_ylim(ys)
@@ -944,16 +963,20 @@ class TurboMachineryComputationV2:
             else:
                 plt.title('Turbine Stage '+str(int(stage_array[i])))
                     # plt.plot(alpha_1[:,i],'b')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
+                if a1check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b',label='$\\alpha_2$')
                 # plt.plot(alpha_2[:,i],'g')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
-                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
+                if a2check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g',label='$\\alpha_3$')
+                if b1check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r',label='$\\beta_2$')
+                if b2check != 2:
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m',label='$\\beta_3$')
                 ys = plt.gca().get_ylim()
                 plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
                 plt.gca().set_ylim(ys)
                 plt.xticks([0, 1, 2],['Root','Mean','Tip'])
-                plt.legend(['$\\alpha_2$','$\\alpha_3$','$\\beta_2$','$\\beta_3$'],bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
             
 
 
