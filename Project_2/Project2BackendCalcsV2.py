@@ -921,9 +921,9 @@ class TurboMachineryComputationV2:
 
             plt.figure(i)
             if compressor:
-                plt.title('Compressor Stage '+str(int(i)))
+                plt.title('Compressor Stage '+str(int(i+1)))
             else:
-                plt.title('Turbine Stage '+str(int(i)))
+                plt.title('Turbine Stage '+str(int(i+1)))
             # plt.hold('on')
             # plt.plot(alpha_1[:,i],'b')
             plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
