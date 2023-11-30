@@ -552,12 +552,19 @@ class TurboMachineryComputationV2:
         tipData = np.round(np.array([tipVals1, tipVals2]),4)
         rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),4) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
         
+        # Creates the DF for the gasAnglesDF
+        # [alpha2r,alpha2m,alpha2t,beta2r,beta2m,beta2t,alpha3r,alpha3m,alpha3t,beta3r,beta3m,beta3t]
+        gasAngles1 = np.round(np.array([tipVals1[2],gasParamsStg1[1],rootVals1[2],tipVals1[4],gasParamsStg1[3],rootVals1[4],tipVals1[3],gasParamsStg1[2],rootVals1[3],tipVals1[5],gasParamsStg1[4],rootVals1[5]]),4)
+        gasAngles2 = np.round(np.array([tipVals2[2],gasParamsStg2[1],rootVals2[2],tipVals2[4],gasParamsStg2[3],rootVals2[4],tipVals2[3],gasParamsStg2[2],rootVals2[3],tipVals2[5],gasParamsStg2[4],rootVals2[5]]),4)
+        gasAnglesDF= pd.DataFrame(np.array([gasAngles1, gasAngles2]), index=[1,2],columns=['alpha1_r','alpha1_m','alpha1_t','beta1_r','beta1_m','beta1_t','alpha2_r','alpha2_m','alpha2_t','beta2_r','beta2_m','beta2_t'])
+        
+
         gasParamDF = pd.DataFrame(gasParamData, index=[1,2], columns=['α1','α2','α3','β2','β3','ΔT0s','P02/P01','Cw3','M3t','Φ','ψ','Λ','MV2r'])
         measurementsDF = pd.DataFrame(measurementsData, index=[1,2], columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3','rm'])
         rootDF = pd.DataFrame(rootData, index=[1,2], columns=['Ur2', 'Ur3', 'alpha2r', 'alpha3r', 'beta2r', 'beta3r', 'Cw1r', 'V2r', 'C2r', 'Cw2r', 'V3r', 'C3r', 'Cw3r', 'phiRoot', 'psiRoot', 'lambdaRoot'])
         tipDF = pd.DataFrame(tipData, index=[1,2], columns=['Ut2', 'Ut3', 'alpha2t', 'alpha3t', 'beta2t', 'beta3t', 'Cw1t', 'V2t', 'C2t', 'Cw2t', 'V3t', 'C3t', 'Cw3t', 'phiTip', 'psiTip', 'lambdaTip'])
         
-        return gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, Um, desiredParams
+        return gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, Um, desiredParams, gasAnglesDF
         
     
 
@@ -953,8 +960,8 @@ class TurboMachineryComputationV2:
 
 
 
-backend2 = TurboMachineryComputationV2()
-optimalParams = backend2.fullturbine()
+# backend2 = TurboMachineryComputationV2()
+# optimalParams = backend2.fullturbine()
 # print('\nTurbine $\Delta$ T: {}'.format(dT0_turb))
 # print('\nStage $\Delta$ T: {} K'.format(T0s))
 # print('\nTip Mach Numbers: {}'.format(M))
