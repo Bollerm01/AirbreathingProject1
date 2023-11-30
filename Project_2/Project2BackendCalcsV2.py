@@ -894,7 +894,7 @@ class TurboMachineryComputationV2:
         beta_2 = np.zeros([3,len(stage_array)])
         def func(x,a,b,c):
             return a*x**2 + b*x + c 
-
+        
         for i in range(len(stage_array)):
             alpha_1[0,i] = tiproot_table['alpha1_r'][stage_array[i]]
             alpha_1[1,i] = tiproot_table['alpha1_m'][stage_array[i]]
@@ -921,21 +921,32 @@ class TurboMachineryComputationV2:
 
             plt.figure(i)
             if compressor:
-                plt.title('Compressor Stage '+str(int(i+1)))
+                plt.title('Compressor Stage '+str(int(stage_array[i])))
+                # plt.hold('on')
+                # plt.plot(alpha_1[:,i],'b')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
+                # plt.plot(alpha_2[:,i],'g')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
+                ys = plt.gca().get_ylim()
+                plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
+                plt.gca().set_ylim(ys)
+                plt.xticks([0, 1, 2],['Root','Mean','Tip'])
+                plt.legend(['$\\alpha_1$','$\\alpha_2$','$\\beta_1$','$\\beta_2$'],bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
             else:
-                plt.title('Turbine Stage '+str(int(i+1)))
-            # plt.hold('on')
-            # plt.plot(alpha_1[:,i],'b')
-            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
-            # plt.plot(alpha_2[:,i],'g')
-            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
-            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
-            plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
-            ys = plt.gca().get_ylim()
-            plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
-            plt.gca().set_ylim(ys)
-            plt.xticks([0, 1, 2],['Root','Mean','Tip'])
-            plt.legend(['$\\alpha_1$','$\\alpha_2$','$\\beta_1$','$\\beta_2$'],bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+                plt.title('Turbine Stage '+str(int(stage_array[i])))
+                    # plt.plot(alpha_1[:,i],'b')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
+                # plt.plot(alpha_2[:,i],'g')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
+                plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
+                ys = plt.gca().get_ylim()
+                plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
+                plt.gca().set_ylim(ys)
+                plt.xticks([0, 1, 2],['Root','Mean','Tip'])
+                plt.legend(['$\\alpha_2$','$\\alpha_3$','$\\beta_2$','$\\beta_3$'],bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
             
 
 
