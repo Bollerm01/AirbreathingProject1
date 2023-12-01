@@ -170,7 +170,7 @@ class TurboMachineryComputationV2:
 
         sizingtable = pd.DataFrame(np.round([np.array([rr_rt1,rr_rt,0.0, h11,h21,0.0])],5),columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3'])
 
-        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([0.0]),np.array([0.0,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Loading'])
+        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([0.0]),np.array([0.0,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Work Done'])
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
@@ -335,7 +335,7 @@ class TurboMachineryComputationV2:
         ################ Last Stage ################
         delta_T0 = ((15.0*self.P_02/p01)**((self.y_c-1)/self.y_c)-1)*T01/self.n_inf_c # Desired temperature rise for the second stage
         React = 0.5 ## Degree of reaction for the second stage   
-        self.lam = self.workdone(15) ## Update work done factor 
+        self.lam = self.workdone(ns+1) ## Update work done factor 
         # Calculate relative blade angles by solving system of eqs
         B1 = delta_T0*self.cp_c*1e3/(self.lam*self.U_m*self.C_a)
         B2 = React*2*self.U_m/self.C_a
@@ -950,11 +950,11 @@ class TurboMachineryComputationV2:
                     plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b')
                 # plt.plot(alpha_2[:,i],'g')
                 if a2check != 2:
-                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g')
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'b--')
                 if b1check != 2:
                     plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r')
                 if b2check != 2:
-                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m')
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'r--')
                 ys = plt.gca().get_ylim()
                 plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
                 plt.gca().set_ylim(ys)
@@ -964,14 +964,14 @@ class TurboMachineryComputationV2:
                 plt.title('Turbine Stage '+str(int(stage_array[i])))
                     # plt.plot(alpha_1[:,i],'b')
                 if a1check != 2:
-                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'b',label='$\\alpha_2$')
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a1[0], fit_a1[1], fit_a1[2]),'g',label='$\\alpha_2$')
                 # plt.plot(alpha_2[:,i],'g')
                 if a2check != 2:
-                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g',label='$\\alpha_3$')
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_a2[0], fit_a2[1], fit_a2[2]),'g--',label='$\\alpha_3$')
                 if b1check != 2:
-                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'r',label='$\\beta_2$')
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b1[0], fit_b1[1], fit_b1[2]),'m',label='$\\beta_2$')
                 if b2check != 2:
-                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m',label='$\\beta_3$')
+                    plt.plot(np.arange(0,2,0.001),func(np.arange(0,2,0.001), fit_b2[0], fit_b2[1], fit_b2[2]),'m--',label='$\\beta_3$')
                 ys = plt.gca().get_ylim()
                 plt.plot(np.array([1.0,1.0]),np.array([ys[0]-50,ys[1]]),'k')
                 plt.gca().set_ylim(ys)
