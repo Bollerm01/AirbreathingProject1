@@ -546,16 +546,16 @@ class TurboMachineryComputationV2:
 
 
         # Adds the data to Pandas DFs 
-        gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2]),4)
-        measurementsData = np.round(np.array([measurementsStg1,measurementsStg2]),4)
-        rootData = np.round(np.array([rootVals1, rootVals2]),4)
-        tipData = np.round(np.array([tipVals1, tipVals2]),4)
-        rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),4) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
+        gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2]),2)
+        measurementsData = np.round(np.array([measurementsStg1,measurementsStg2]),2)
+        rootData = np.round(np.array([rootVals1, rootVals2]),2)
+        tipData = np.round(np.array([tipVals1, tipVals2]),2)
+        rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),2) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
         
         # Creates the DF for the gasAnglesDF
         # [alpha2r,alpha2m,alpha2t,beta2r,beta2m,beta2t,alpha3r,alpha3m,alpha3t,beta3r,beta3m,beta3t]
-        gasAngles1 = np.round(np.array([tipVals1[2],gasParamsStg1[1],rootVals1[2],tipVals1[4],gasParamsStg1[3],rootVals1[4],tipVals1[3],gasParamsStg1[2],rootVals1[3],tipVals1[5],gasParamsStg1[4],rootVals1[5]]),4)
-        gasAngles2 = np.round(np.array([tipVals2[2],gasParamsStg2[1],rootVals2[2],tipVals2[4],gasParamsStg2[3],rootVals2[4],tipVals2[3],gasParamsStg2[2],rootVals2[3],tipVals2[5],gasParamsStg2[4],rootVals2[5]]),4)
+        gasAngles1 = np.round(np.array([tipVals1[2],gasParamsStg1[1],rootVals1[2],tipVals1[4],gasParamsStg1[3],rootVals1[4],tipVals1[3],gasParamsStg1[2],rootVals1[3],tipVals1[5],gasParamsStg1[4],rootVals1[5]]),2)
+        gasAngles2 = np.round(np.array([tipVals2[2],gasParamsStg2[1],rootVals2[2],tipVals2[4],gasParamsStg2[3],rootVals2[4],tipVals2[3],gasParamsStg2[2],rootVals2[3],tipVals2[5],gasParamsStg2[4],rootVals2[5]]),2)
         gasAnglesDF= pd.DataFrame(np.array([gasAngles1, gasAngles2]), index=[1,2],columns=['alpha1_r','alpha1_m','alpha1_t','beta1_r','beta1_m','beta1_t','alpha2_r','alpha2_m','alpha2_t','beta2_r','beta2_m','beta2_t'])
         
 
