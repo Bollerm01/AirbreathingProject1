@@ -170,7 +170,7 @@ class TurboMachineryComputationV2:
 
         sizingtable = pd.DataFrame(np.round([np.array([rr_rt1,rr_rt,0.0, h11,h21,0.0])],5),columns=['r_t 1','r_t 2','r_t 3','h1','h2','h3'])
 
-        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021]),np.array([p031/self.P_02]),np.array([p031]),np.array([0.0]),np.array([0.0,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Work Done'])
+        meantable = pd.DataFrame(np.round([np.concatenate((data,np.array([T021,T021-self.T_02]),np.array([p031/self.P_02]),np.array([p031]),np.array([0.0]),np.array([0.0,C_w1,C_w2]),np.array([React]),np.array([self.lam])))],3), columns=['alpha1','alpha2','beta1','beta2','alpha3','V2/V1','C3/C2','T02','deltaT','P03/P01','P03','M1t','M2t','Cw1','Cw2','Reaction','Work Done'])
         # meantable['C3/C2'][0] = 2.0
 
         ################ Stage 2 ################
@@ -203,7 +203,7 @@ class TurboMachineryComputationV2:
         T22 = T022 - C22**2/(2*self.cp_c*1e3)
         # M22t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T22)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, p032/p031, p032, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T022, T022-T021,p032/p031, p032, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
         # Radius at the inlet to the rotor
         T12 = T021 - C21**2/(2*self.cp_c*1e3)
         p12 = p031*(T12/T021)**(self.y_c/(self.y_c-1))
@@ -258,7 +258,7 @@ class TurboMachineryComputationV2:
         T23 = T023 - C23**2/(2*self.cp_c*1e3)
         # M23t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T23)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, p033/p032, p033, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T023, T023-T022,p033/p032, p033, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
         # Radius at the inlet to the rotor
         p13 = p032*(T22/T022)**(self.y_c/(self.y_c-1))
         rho13 = p13*1e5/(T22*self.R)
@@ -362,7 +362,7 @@ class TurboMachineryComputationV2:
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
         # M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, T02-T01,p03/p01, p03, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
          # Radius at the inlet to the rotor
         C1 = self.C_a/np.cos(alpha1)
         T1 = T01 - C1**2/(2*self.cp_c*1e3)
@@ -596,7 +596,7 @@ class TurboMachineryComputationV2:
         T2 = T02 - C23**2/(2*self.cp_c*1e3)
         # M2t = self.C_a/np.cos(beta2)/np.sqrt(self.y_c*self.R*T2)
         # Data organization
-        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, p03/p01, p03, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
+        data = np.round(np.concatenate((np.rad2deg(np.array([alpha1,alpha2,beta1,beta2])), np.array([0.0,diffusion, 0.0,T02, T02-T01,p03/p01, p03, 0.0, 0.0,C_w1,C_w2, React, self.lam]))),3)
         # Radius at the inlet to the rotor
         C1 = self.C_a/np.cos(alpha1)
         T1 = T01 - C1**2/(2*self.cp_c*1e3)
