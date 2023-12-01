@@ -410,7 +410,7 @@ class TurboMachineryComputationV2:
             s_diffusion = np.cos(alpha2)/np.cos(alpha3)
             meantable['C3/C2'][i] = np.round(s_diffusion,3)
 
-        tiproot_table, whirl_table, vel_table, meantable, dif_table = self.comp_root_tip(meantable=meantable,sizingtable=sizingtable,rm=self.rm)        
+        tiproot_table, whirl_table, vel_table, meantable, dif_table, velBlade_table = self.comp_root_tip(meantable=meantable,sizingtable=sizingtable,rm=self.rm)        
 
         sizingtable.index = np.arange(1, len(sizingtable)+1)
         meantable.index = np.arange(1, len(meantable)+1)
@@ -418,9 +418,10 @@ class TurboMachineryComputationV2:
         whirl_table.index = np.arange(1, len(whirl_table)+1)
         vel_table.index = np.arange(1, len(vel_table)+1)
         dif_table.index = np.arange(1, len(dif_table)+1)
+        velBlade_table.index = np.arange(1, len(velBlade_table)+1)
         # meantable.index.name = 'Stage'
         # meantable.reset_index().to_string(index=False)
-        return meantable, sizingtable, tiproot_table, whirl_table, vel_table, dif_table
+        return meantable, sizingtable, tiproot_table, whirl_table, vel_table, dif_table, velBlade_table
        
 
 
@@ -852,21 +853,30 @@ class TurboMachineryComputationV2:
             T2 = T02 - C2t**2/(2*self.cp_c*1e3)
             M1t = V1t/np.sqrt(self.y_c*self.R*T1)
             M2t = V2t/np.sqrt(self.y_c*self.R*T2)
+            # Calculate blade velocities
+            U1t = (np.tan(alpha1t)+np.tan(beta1t))*self.C_a
+            U1m = (np.tan(np.deg2rad(alpha1m))+np.tan(np.deg2rad(beta1m)))*self.C_a
+            U1r = (np.tan(alpha1r)+np.tan(beta1r))*self.C_a
+            U2t = (np.tan(alpha2t)+np.tan(beta2t))*self.C_a
+            U2m = (np.tan(np.deg2rad(alpha2m))+np.tan(np.deg2rad(beta2m)))*self.C_a
+            U2r = (np.tan(alpha2r)+np.tan(beta2r))*self.C_a
             # Update tables
             if i == 0:
                 tiproot_table = pd.DataFrame(np.round(np.rad2deg([np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])]),2),columns=['alpha1_t','alpha1_m','alpha1_r','beta1_t','beta1_m','beta1_r','alpha2_t','alpha2_m','alpha2_r','beta2_t','beta2_m','beta2_r','alpha3_t','alpha3_m','alpha3_r'])
                 whirl_table = pd.DataFrame(np.round([np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0])],2),columns=['Cw1_t','Cw1_m','Cw1_r','Cw2_t','Cw2_m','Cw2_r','Cw3_t','Cw3_m','Cw3_r'])
-                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r])],3),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','C3_t','C3_m','C3_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r'])
+                vel_table = pd.DataFrame(np.round([np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r])],1),columns=['C1_t','C1_m','C1_r','C2_t','C2_m','C2_r','C3_t','C3_m','C3_r','V1_t','V1_m','V1_r','V2_t','V2_m','V2_r'])
                 dif_table = pd.DataFrame(np.round([np.array([V2t/V1t,V2m/V1m,V2r/V1r,0.0,0.0,0.0])],3),columns=['V2/V1_t','V2/V1_m','V2/V1_r','C3/C2_t','C3/C2_m','C3/C2_r'])
+                velBlade_table = pd.DataFrame(np.round([np.array([U1t,U1m,U1r,U2t,U2m,U2r])],3),columns=['U1_t','U1_m','U1_r','U2_t','U2_m','U2_r'])
             else:
                 data = np.round(np.rad2deg(np.array([alpha1t,np.deg2rad(alpha1m),alpha1r,beta1t,np.deg2rad(beta1m),beta1r,alpha2t,np.deg2rad(alpha2m),alpha2r,beta2t,np.deg2rad(beta2m),beta2r,0.0,0.0,0.0])),2)
                 data2 = np.round(np.array([Cw1t,Cw1,Cw1r,Cw2t,Cw2,Cw2r,0.0,0.0,0.0]),2)
-                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r]),3)
+                data3 = np.round(np.array([C1t,C1m,C1r,C2t,C2m,C2r,0.0,0.0,0.0,V1t,V1m,V1r,V2t,V2m,V2r]),1)
                 data4 = np.round(np.array([V2t/V1t,V2m/V1m,V2r/V1r,0.0,0.0,0.0]),3)
                 tiproot_table.loc[len(tiproot_table)] = data
                 whirl_table.loc[len(whirl_table)] = data2
                 vel_table.loc[len(vel_table)] = data3
-                dif_table.loc[len(dif_table)] = data4      
+                dif_table.loc[len(dif_table)] = data4     
+                velBlade_table.loc[len(velBlade_table)] = np.round(np.array([U1t,U1m,U1r,U2t,U2m,U2r])) 
 
             meantable['M1t'][i] = np.round(M1t,3)
             meantable['M2t'][i] = np.round(M2t,3)
@@ -880,14 +890,14 @@ class TurboMachineryComputationV2:
             whirl_table['Cw3_t'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_t'][i]))*self.C_a,2)
             whirl_table['Cw3_m'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_m'][i]))*self.C_a,2)
             whirl_table['Cw3_r'][i] = np.round(np.tan(np.deg2rad(tiproot_table['alpha3_r'][i]))*self.C_a,2)
-            vel_table['C3_t'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_t'][i])),3)
-            vel_table['C3_m'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_m'][i])),3)
-            vel_table['C3_r'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_r'][i])),3)
+            vel_table['C3_t'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_t'][i])),1)
+            vel_table['C3_m'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_m'][i])),1)
+            vel_table['C3_r'][i] = np.round(self.C_a/np.cos(np.deg2rad(tiproot_table['alpha3_r'][i])),1)
             dif_table['C3/C2_t'][i] = np.round(vel_table['C3_t'][i]/vel_table['C2_t'][i],3)
             dif_table['C3/C2_m'][i] = np.round(vel_table['C3_m'][i]/vel_table['C2_m'][i],3)
             dif_table['C3/C2_r'][i] = np.round(vel_table['C3_r'][i]/vel_table['C2_r'][i],3)
 
-        return tiproot_table, whirl_table, vel_table, meantable, dif_table
+        return tiproot_table, whirl_table, vel_table, meantable, dif_table,velBlade_table
     
     def workdone(self,stage):
         # Loading factor calculation curve fit
