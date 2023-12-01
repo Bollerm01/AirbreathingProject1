@@ -803,7 +803,7 @@ class TurboMachineryComputation:
         C2r = (Cw2r**2 + Ca2**2)**0.5
         C3r = Ca3/np.cos(alpha3r)
         Cw3r = C3r*np.sin(alpha3r)
-        V3r = (Cw3r**2 + Ca3**2)**0.5
+        V3r = ((Cw3r+Ur3)**2 + Ca3**2)**0.5
         Cw1r = (rm/rr1)*Cw1
 
         ######## Tip ########
@@ -812,7 +812,7 @@ class TurboMachineryComputation:
         C2t = (Cw2t**2 + Ca2**2)**0.5
         C3t = Ca3/np.cos(alpha3t)
         Cw3t = C3t*np.sin(alpha3t)
-        V3t = (Cw3t**2 + Ca3**2)**0.5
+        V3t = ((Cw3t+Ut3)**2 + Ca3**2)**0.5
         Cw1t = (rm/rt1)*Cw1
         
         # Calculates the phi, psi, and the lambda for the tip and the root
