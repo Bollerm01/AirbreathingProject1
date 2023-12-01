@@ -471,7 +471,7 @@ class TurboMachineryComputationV2:
                 # Calculates the temp drop for the first stage based on the psi
                 T0s_rev1 = (psi_temp1*(Um**2))/(2*self.cp_h*1000)        
                 
-                gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_temp1, phi_temp1, lambda_temp1)
+                gasParamsStg1, measurementsStg1, axialV1, otherV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, psi_temp1, phi_temp1, lambda_temp1)
                 
                 [h11, h21, h31, M31t] = [measurementsStg1[3], measurementsStg1[4], measurementsStg1[5], gasParamsStg1[8]]
                 # checks if the geometry is satisfied before continuing 
@@ -495,7 +495,7 @@ class TurboMachineryComputationV2:
                                 alpha3 = 0.0
                                 T_012 = self.T_04 - T0s_rev1
                                 P_012 = self.P_04*gasParamsStg1[6] 
-                                gasParamsStg2, measurementsStg2, axialV2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0_remaining, psi_turb2, phi_temp2, lambda_temp2)
+                                gasParamsStg2, measurementsStg2, axialV2, otherV2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0_remaining, psi_turb2, phi_temp2, lambda_temp2)
                                 
                                 [h12, h22, h32, M32t, Cw3_2] = [measurementsStg2[3], measurementsStg2[4], measurementsStg2[5], gasParamsStg2[8], axialV2[4]]
                                 # checks that the geometry is satisfied 
@@ -527,7 +527,7 @@ class TurboMachineryComputationV2:
 
         T0s_rev1 = (psi_1*(Um**2))/(2*self.cp_h*1000)        
                 
-        gasParamsStg1, measurementsStg1, axialV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, desiredParams[0], desiredParams[1], desiredParams[2])
+        gasParamsStg1, measurementsStg1, axialV1, otherV1 = self.turbinestage(alpha1, alpha3, Um, T_011, P_011, T0s_rev1, desiredParams[0], desiredParams[1], desiredParams[2])
 
         rootVals1, tipVals1, rtMeasure1 = self.turb_root_tip(gasParamsStg1, measurementsStg1, Um, axialV1)
 
@@ -540,23 +540,27 @@ class TurboMachineryComputationV2:
         T_012 = self.T_04 - T0s_rev1
         P_012 = self.P_04*gasParamsStg1[6]
 
-        gasParamsStg2, measurementsStg2, axialV2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0_remaining, desiredParams[3], desiredParams[4], desiredParams[5])
+        gasParamsStg2, measurementsStg2, axialV2, otherV2 = self.turbinestage(alpha1, alpha3, Um, T_012, P_012, T0_remaining, desiredParams[3], desiredParams[4], desiredParams[5])
                     
         rootVals2, tipVals2, rtMeasure2 = self.turb_root_tip(gasParamsStg2, measurementsStg2, Um, axialV2)
 
 
 
         # Adds the data to Pandas DFs 
-        gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2]),4)
-        measurementsData = np.round(np.array([measurementsStg1,measurementsStg2]),4)
-        rootData = np.round(np.array([rootVals1, rootVals2]),4)
-        tipData = np.round(np.array([tipVals1, tipVals2]),4)
-        rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),4) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
-        
+        gasParamData = np.round(np.array([gasParamsStg1,gasParamsStg2]),2)
+        measurementsData = np.round(np.array([measurementsStg1,measurementsStg2]),2)
+        rootData = np.round(np.array([rootVals1, rootVals2]),2)
+        tipData = np.round(np.array([tipVals1, tipVals2]),2)
+        rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),2) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
+        vData = np.round(np.array([axialV1, axialV2]),2)
+        vData2 = np.round(np.array([otherV1, otherV2]),2)
+        vDF = pd.DataFrame(vData, index=[1,2],columns=['Ca1','Cw1','Ca2','Cw2','Cw3'])
+        vDF2 = pd.DataFrame(vData2, index=[1,2],columns=['C2','Ca3','C3'])
+       
         # Creates the DF for the gasAnglesDF
         # [alpha2r,alpha2m,alpha2t,beta2r,beta2m,beta2t,alpha3r,alpha3m,alpha3t,beta3r,beta3m,beta3t]
-        gasAngles1 = np.round(np.array([tipVals1[2],gasParamsStg1[1],rootVals1[2],tipVals1[4],gasParamsStg1[3],rootVals1[4],tipVals1[3],gasParamsStg1[2],rootVals1[3],tipVals1[5],gasParamsStg1[4],rootVals1[5]]),4)
-        gasAngles2 = np.round(np.array([tipVals2[2],gasParamsStg2[1],rootVals2[2],tipVals2[4],gasParamsStg2[3],rootVals2[4],tipVals2[3],gasParamsStg2[2],rootVals2[3],tipVals2[5],gasParamsStg2[4],rootVals2[5]]),4)
+        gasAngles1 = np.round(np.array([tipVals1[2],gasParamsStg1[1],rootVals1[2],tipVals1[4],gasParamsStg1[3],rootVals1[4],tipVals1[3],gasParamsStg1[2],rootVals1[3],tipVals1[5],gasParamsStg1[4],rootVals1[5]]),2)
+        gasAngles2 = np.round(np.array([tipVals2[2],gasParamsStg2[1],rootVals2[2],tipVals2[4],gasParamsStg2[3],rootVals2[4],tipVals2[3],gasParamsStg2[2],rootVals2[3],tipVals2[5],gasParamsStg2[4],rootVals2[5]]),2)
         gasAnglesDF= pd.DataFrame(np.array([gasAngles1, gasAngles2]), index=[1,2],columns=['alpha1_r','alpha1_m','alpha1_t','beta1_r','beta1_m','beta1_t','alpha2_r','alpha2_m','alpha2_t','beta2_r','beta2_m','beta2_t'])
         
 
@@ -565,7 +569,7 @@ class TurboMachineryComputationV2:
         rootDF = pd.DataFrame(rootData, index=[1,2], columns=['Ur2', 'Ur3', 'alpha2r', 'alpha3r', 'beta2r', 'beta3r', 'Cw1r', 'V2r', 'C2r', 'Cw2r', 'V3r', 'C3r', 'Cw3r', 'phiRoot', 'psiRoot', 'lambdaRoot'])
         tipDF = pd.DataFrame(tipData, index=[1,2], columns=['Ut2', 'Ut3', 'alpha2t', 'alpha3t', 'beta2t', 'beta3t', 'Cw1t', 'V2t', 'C2t', 'Cw2t', 'V3t', 'C3t', 'Cw3t', 'phiTip', 'psiTip', 'lambdaTip'])
         
-        return gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, Um, desiredParams, gasAnglesDF
+        return gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, Um, desiredParams, gasAnglesDF, vDF, vDF2
         
     
 
@@ -741,7 +745,7 @@ class TurboMachineryComputationV2:
         gasParams = np.array([np.rad2deg(alpha1),np.rad2deg(alpha2),np.rad2deg(alpha3),np.rad2deg(beta2),np.rad2deg(beta3),T0s_rev,Pr,Cw3,M3t,phi,psi_turb,Lambda,MV2r])
         measurements = np.array([rtRat1,rtRat2,rtRat3,h1,h2,h3,rm])
         
-        return gasParams, measurements, np.array([Ca1,Cw1,Ca2,Cw2,Cw3])
+        return gasParams, measurements, np.array([Ca1,Cw1,Ca2,Cw2,Cw3]), np.array([C2,Ca3,C3])
     
     def turb_root_tip(self, meanParams, meanMeasurements, Um, axialVelocities):
         # Pulls the mean values
@@ -780,7 +784,7 @@ class TurboMachineryComputationV2:
         C2r = (Cw2r**2 + Ca2**2)**0.5
         C3r = Ca3/np.cos(alpha3r)
         Cw3r = C3r*np.sin(alpha3r)
-        V3r = (Cw3r**2 + Ca3**2)**0.5
+        V3r = ((Cw3r+Ur3)**2 + Ca3**2)**0.5
         Cw1r = (rm/rr1)*Cw1
 
         ######## Tip ########
@@ -789,7 +793,7 @@ class TurboMachineryComputationV2:
         C2t = (Cw2t**2 + Ca2**2)**0.5
         C3t = Ca3/np.cos(alpha3t)
         Cw3t = C3t*np.sin(alpha3t)
-        V3t = (Cw3t**2 + Ca3**2)**0.5
+        V3t = ((Cw3t+Ut3)**2 + Ca3**2)**0.5
         Cw1t = (rm/rt1)*Cw1
         
         # Calculates the phi, psi, and the lambda for the tip and the root
