@@ -552,7 +552,7 @@ class TurboMachineryComputationV2:
         rootData = np.round(np.array([rootVals1, rootVals2]),2)
         tipData = np.round(np.array([tipVals1, tipVals2]),2)
         rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),2) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
-        vData = np.round(np.array([np.concatenate(axialV1, otherV1), np.concatenate(axialV2,otherV2)]),2)
+        vData = np.round(np.array([np.concatenate((axialV1, otherV1)), np.concatenate((axialV2,otherV2))]),2)
         # vData2 = np.round(np.array([otherV1, otherV2]),2)
         
         vDF = pd.DataFrame(vData, index=[1,2],columns=['Ca1','Cw1','Ca2','Cw2','Cw3','C2','Ca3','C3', 'V2', 'V3'])
