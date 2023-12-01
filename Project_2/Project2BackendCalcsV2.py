@@ -552,7 +552,7 @@ class TurboMachineryComputationV2:
         tipData = np.round(np.array([tipVals1, tipVals2]),2)
         rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),2) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
         vData = np.round(np.array([axialV1, axialV2]),2)
-        vDF = pd.DataFrame(vData, index=[1,2],columns=['Ca1','Cw1','Ca2','Cw2','Cw3'])
+        vDF = pd.DataFrame(vData, index=[1,2],columns=['Ca1','Cw1','Ca2','Cw2','C2','Cw3','Ca3','C3'])
        
        # Creates the DF for the gasAnglesDF
         # [alpha2r,alpha2m,alpha2t,beta2r,beta2m,beta2t,alpha3r,alpha3m,alpha3t,beta3r,beta3m,beta3t]
@@ -742,7 +742,7 @@ class TurboMachineryComputationV2:
         gasParams = np.array([np.rad2deg(alpha1),np.rad2deg(alpha2),np.rad2deg(alpha3),np.rad2deg(beta2),np.rad2deg(beta3),T0s_rev,Pr,Cw3,M3t,phi,psi_turb,Lambda,MV2r])
         measurements = np.array([rtRat1,rtRat2,rtRat3,h1,h2,h3,rm])
         
-        return gasParams, measurements, np.array([Ca1,Cw1,Ca2,Cw2,Cw3])
+        return gasParams, measurements, np.array([Ca1,Cw1,Ca2,Cw2,C2,Cw3,Ca3,C3])
     
     def turb_root_tip(self, meanParams, meanMeasurements, Um, axialVelocities):
         # Pulls the mean values
