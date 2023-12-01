@@ -510,7 +510,7 @@ class TurboMachineryComputationV2:
                                         desiredParams[5] = lambda_temp2
                                         desiredParams[6] = Cw3_2
                                         dCw3 = Cw3_2
-                                        print('params found: {}'.format(desiredParams))
+                                        print('Turbine Parameters Found: {}'.format(desiredParams))
                                     else: continue
                                 else: continue
                 else: continue
@@ -552,10 +552,11 @@ class TurboMachineryComputationV2:
         rootData = np.round(np.array([rootVals1, rootVals2]),2)
         tipData = np.round(np.array([tipVals1, tipVals2]),2)
         rtMeasurements = np.round(np.array([rtMeasure1[0],rtMeasure1[1], rtMeasure1[2], rtMeasure2[3], rtMeasure2[4]]),2) #[rootInlet, tipInlet, rm, 2ndRoot(outlet), 2ndTip(outlet)]
-        vData = np.round(np.array([axialV1, axialV2]),2)
-        vData2 = np.round(np.array([otherV1, otherV2]),2)
-        vDF = pd.DataFrame(vData, index=[1,2],columns=['Ca1','Cw1','Ca2','Cw2','Cw3'])
-        vDF2 = pd.DataFrame(vData2, index=[1,2],columns=['C2','Ca3','C3', 'V2', 'V3'])
+        vData = np.round(np.array([np.concatenate(axialV1, otherV1), np.concatenate(axialV2,otherV2)]),2)
+        # vData2 = np.round(np.array([otherV1, otherV2]),2)
+        
+        vDF = pd.DataFrame(vData, index=[1,2],columns=['Ca1','Cw1','Ca2','Cw2','Cw3','C2','Ca3','C3', 'V2', 'V3'])
+        # vDF2 = pd.DataFrame(vData2, index=[1,2],columns=['C2','Ca3','C3', 'V2', 'V3'])
        
         # Creates the DF for the gasAnglesDF
         # [alpha2r,alpha2m,alpha2t,beta2r,beta2m,beta2t,alpha3r,alpha3m,alpha3t,beta3r,beta3m,beta3t]
@@ -569,7 +570,7 @@ class TurboMachineryComputationV2:
         rootDF = pd.DataFrame(rootData, index=[1,2], columns=['Ur2', 'Ur3', 'alpha2r', 'alpha3r', 'beta2r', 'beta3r', 'Cw1r', 'V2r', 'C2r', 'Cw2r', 'V3r', 'C3r', 'Cw3r', 'phiRoot', 'psiRoot', 'lambdaRoot'])
         tipDF = pd.DataFrame(tipData, index=[1,2], columns=['Ut2', 'Ut3', 'alpha2t', 'alpha3t', 'beta2t', 'beta3t', 'Cw1t', 'V2t', 'C2t', 'Cw2t', 'V3t', 'C3t', 'Cw3t', 'phiTip', 'psiTip', 'lambdaTip'])
         
-        return gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, Um, desiredParams, gasAnglesDF, vDF, vDF2
+        return gasParamDF, measurementsDF, rootDF, tipDF, rtMeasurements, Um, desiredParams, gasAnglesDF, vDF
         
     
 
