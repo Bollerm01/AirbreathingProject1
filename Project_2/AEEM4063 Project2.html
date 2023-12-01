@@ -16805,9 +16805,10 @@ Tip Parameters for the turbine:
 <span class="c1"># print('Compressor Outlet Temp: ' +str(np.round(T_02,5)))</span>
 <span class="c1"># print('TIP: ' +str(np.round(P_03,5)))</span>
 <span class="c1"># print('TIT: ' +str(np.round(T_03,5)))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">'Mach number at tip (inlet): '</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">M1t</span><span class="p">,</span><span class="mi">3</span><span class="p">)))</span>
+<span class="c1"># print('Mach number at tip (inlet): '+str(np.round(meantable['M1t'][0],3)))</span>
 
 <span class="n">meantable</span><span class="p">,</span><span class="n">sizingtable</span><span class="p">,</span><span class="n">tiproot_table</span><span class="p">,</span><span class="n">whirl_table</span><span class="p">,</span><span class="n">vel_table</span><span class="p">,</span><span class="n">dif_table</span><span class="p">,</span> <span class="n">velBlade_table</span> <span class="o">=</span> <span class="n">backend2</span><span class="o">.</span><span class="n">fullcompressor</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Mach number at tip (inlet): '</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">meantable</span><span class="p">[</span><span class="s1">'M1t'</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">)))</span>
 
 <span class="c1"># disp.display(table)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Mean radius values for the compressor are: '</span><span class="p">)</span>
@@ -16887,7 +16888,7 @@ Mean radius (constant): 0.19767 (m)
 Root radius (inlet): 0.13178 (m)
 Tip radius (outlet): 0.20729 (m)
 Root radius (outlet): 0.18804 (m)
-Mach number at tip (inlet): 1.308
+Mach number at tip (inlet): 1.199
 
 Mean radius values for the compressor are: 
 </pre>
@@ -18835,7 +18836,29 @@ Rest of the V:
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Plots</span>
 <span class="n">backend2</span><span class="o">.</span><span class="n">comp_plotter</span><span class="p">(</span><span class="n">tiproot_table</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">11</span><span class="p">]),</span><span class="n">compressor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># alpham2 = np.array([gasParamDF[1,0],gasParamDF[1,1]])</span>
+<span class="c1"># alpham3 = np.array([gasParamDF[2][0],gasParamDF[2][1]])</span>
+<span class="c1"># betam2 = np.array([gasParamDF[3][0],gasParamDF[3][1]])</span>
+<span class="c1"># betam3 = np.array([gasParamDF[4][0],gasParamDF[4][1]])</span>
+
+<span class="c1"># alphar2 = np.array([rootDF['alpha2r'][0],rootDF['alpha2r'][1]])</span>
+<span class="c1"># alphar3 = np.array([rootDF['alpha3r'][0],rootDF['alpha3r'][1]])</span>
+<span class="c1"># betar2 = np.array([rootDF['beta2r'][0],rootDF['beta2r'][1]])</span>
+<span class="c1"># betar3 = np.array([rootDF['beta3r'][0],rootDF['beta3r'][1]])</span>
+
+<span class="c1"># alphat2 = np.array([tipDF['alpha2t'][0],tipDF['alpha2t'][1]])</span>
+<span class="c1"># alphat3 = np.array([tipDF['alpha3t'][0],tipDF['alpha3t'][1]])</span>
+<span class="c1"># betat2 = np.array([tipDF['beta2t'][0],tipDF['beta2t'][1]])</span>
+<span class="c1"># betat3 = np.array([tipDF['beta3t'][0],tipDF['beta3t'][1]])</span>
+
+<span class="c1"># tip_root_turbine = pd.DataFrame(np.round([np.array([alphat2[0],alpham2[0],alphar2[0],alphat3[0],alpham3[0],alphar3[0],betat2[0],betam2[0],betar2[0],betat3[0],betam3[0],betar3[0]])],5),columns=['alpha1_t','alpha1_m','alpha1_r','alpha2_t','alpha2_m','alpha2_r','beta1_t','beta1_m','beta1_r','beta2_t','beta2_m','beta2_r'])</span>
+<span class="c1"># tip_root_turbine.loc[len(meantable)] = np.array([alphat2[1],alpham2[1],alphar2[1],alphat3[1],alpham3[1],alphar3[1],betat2[1],betam2[1],betar2[1],betat3[1],betam3[1],betar3[1]])</span>
+<span class="c1"># tip_root_turbine.index = np.arange(1, len(tip_root_turbine)+1)</span>
+
 <span class="n">backend2</span><span class="o">.</span><span class="n">comp_plotter</span><span class="p">(</span><span class="n">turbAnglesDF</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]),</span><span class="n">compressor</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">nplotsbefore</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+                   
 </pre></div>
 
      </div>
